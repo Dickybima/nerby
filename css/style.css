@@ -76,6 +76,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .ch0 .h{font-size:clamp(32px,3.3vw,50px)}
 .ch .n{font-family:var(--wide);font-stretch:112%;font-size:11px;font-weight:400;text-transform:uppercase;letter-spacing:.32em;color:rgba(233,245,234,.55)}
 .ch .n em{font-style:normal;color:var(--hot)}
+.ch .n .soon{color:var(--hot)}
 .ch p:not(.n){color:var(--ink2);font-size:15px;line-height:1.6;max-width:40ch;margin-top:6px}
 .ch .ctas{margin-top:8px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .ch0{top:auto;bottom:clamp(70px,13vh,150px);transform:none}

@@ -14,6 +14,13 @@
 
   document.getElementById('yr').textContent = new Date().getFullYear();
 
+  // the MCP endpoint lives on the same host as the site
+  var endpoint = location.origin + '/mcp';
+  [].forEach.call(document.querySelectorAll('.ep'), function (ep) {
+    ep.setAttribute('data-copy', endpoint);
+    ep.querySelector('code').textContent = endpoint;
+  });
+
   /* ---------- scroll → chapter position t in [0, 5] ---------- */
   var t = 0;
   function seg() { return (story.offsetHeight - window.innerHeight) / (CHAPTERS - 1); }

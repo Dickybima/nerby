@@ -1,0 +1,15 @@
+{
+  "name": "nerby-protocol",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Nerby Protocol — landing page and MCP gateway for EVM networks",
+  "scripts": {
+    "dev": "node server/dev.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  }
+}
