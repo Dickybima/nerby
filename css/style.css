@@ -45,7 +45,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .nav{position:fixed;top:0;left:0;right:0;z-index:20;padding-top:env(safe-area-inset-top,0px)}
 .nav .in{display:flex;align-items:center;justify-content:space-between;height:78px;padding-inline:var(--gut)}
 .mark{display:flex;align-items:center;gap:12px;color:var(--acc)}
-.logo{width:26px;height:26px;flex:none;display:block}
+.logo{width:32px;height:32px;flex:none;display:block}
 .mark b{font-family:var(--wide);font-stretch:125%;font-weight:500;font-size:12px;letter-spacing:.4em}
 .menu{display:flex;align-items:center;gap:36px;font-family:var(--wide);font-stretch:112%;font-size:11px;font-weight:400;letter-spacing:.3em;text-transform:uppercase}
 .menu a{color:var(--ink2);transition:color .3s;position:relative}
