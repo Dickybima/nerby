@@ -1,4 +1,4 @@
-/* Nerby — scroll-driven story + particle scene (no dependencies) */
+/* Nerby Protocol — scroll-driven story + particle scene (no dependencies) */
 (function () {
   'use strict';
 
