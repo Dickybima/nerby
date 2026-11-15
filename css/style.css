@@ -46,13 +46,14 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .nav .in{display:flex;align-items:center;justify-content:space-between;height:78px;padding-inline:var(--gut)}
 .mark{display:flex;align-items:center;gap:12px;color:var(--acc)}
 .logo{width:32px;height:32px;flex:none;display:block}
-.mark b{font-family:var(--wide);font-stretch:125%;font-weight:500;font-size:12px;letter-spacing:.4em}
+.mark b{white-space:nowrap;font-family:var(--wide);font-stretch:125%;font-weight:500;font-size:12px;letter-spacing:.4em}
 .menu{display:flex;align-items:center;gap:36px;font-family:var(--wide);font-stretch:112%;font-size:11px;font-weight:400;letter-spacing:.3em;text-transform:uppercase}
 .menu a{color:var(--ink2);transition:color .3s;position:relative}
 .menu a:hover{color:var(--acc)}
 .menu a:not(.cta)::after{content:"";position:absolute;left:0;right:.3em;bottom:-6px;height:1px;background:var(--hot);transform:scaleX(0);transform-origin:right;transition:transform .45s var(--ease)}
 .menu a:not(.cta):hover::after{transform:scaleX(1);transform-origin:left}
-.menu .cta{padding:13px 16px;color:var(--acc)}
+.menu .cta{display:flex;align-items:center;gap:10px;padding:13px 16px;color:var(--acc)}
+.menu .cta svg{width:12px;height:12px}
 
 /* ---------- rail ---------- */
 .rail{position:fixed;z-index:6;right:var(--gut);top:50%;transform:translateY(-50%);display:grid;justify-items:end;gap:14px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;transition:opacity .5s}
@@ -130,6 +131,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 }
 @media (max-width:700px){.tg{display:none}}
 @media (max-width:560px){
+  .menu .cta span{display:none}
   .ch p:not(.n){font-size:14px}
   .btn{padding:15px 18px}
   .tf-c{grid-template-columns:repeat(2,minmax(0,1fr))}
