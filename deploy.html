@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deploy a contract — Nerby Protocol</title>
+<meta name="description" content="Deploy a token or your own Solidity contract with Nerby Protocol. Compiled on the server, reviewed by you, signed in your own wallet.">
+<meta name="theme-color" content="#080c0a">
+<link rel="canonical" href="https://www.nerbyprotocol.xyz/deploy.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nerby Protocol">
+<meta property="og:title" content="Deploy a contract — Nerby Protocol">
+<meta property="og:description" content="Deploy a token or your own Solidity contract with Nerby Protocol. Compiled on the server, reviewed by you, signed in your own wallet.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:site" content="@nerbyprotocol">
+<link rel="icon" type="image/svg+xml" href="img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&family=Mona+Sans:wdth,wght@100..125,400..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/page.css">
+</head>
+<body class="page">
+<div class="pbg" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="in">
+    <a class="mark" href="index.html" aria-label="Nerby Protocol home">
+      <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+      <b>NERBY PROTOCOL</b>
+    </a>
+    <nav class="menu" aria-label="Main">
+      <div class="mi"><a class="mt" href="product.html">Product</a><div class="mp"><div class="mpi"><p>What the gateway does and what your AI can ask it.</p><a href="product.html#how" style="--i:1"><b>How it works</b><i>From a question to live chain data</i></a><a href="product.html#tools" style="--i:2"><b>Tools</b><i>All fourteen tools, with example prompts</i></a><a href="product.html#networks" style="--i:3"><b>Networks</b><i>Eleven chains, one endpoint</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="clients.html">Clients</a><div class="mp"><div class="mpi"><p>Step-by-step setup for the AI apps you already use.</p><a href="clients.html#claude" style="--i:1"><b>Claude</b><i>Claude apps and Claude Code</i></a><a href="clients.html#editors" style="--i:2"><b>Cursor & VS Code</b><i>One small config file</i></a><a href="clients.html#others" style="--i:3"><b>ChatGPT & others</b><i>Any client that speaks MCP</i></a><a href="clients.html#prompts" style="--i:4"><b>First prompts</b><i>Things to try once connected</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="security.html">Security</a><div class="mp"><div class="mpi"><p>What Nerby Protocol can and cannot do with your assets.</p><a href="security.html#keys" style="--i:1"><b>No keys</b><i>The server cannot sign or send</i></a><a href="security.html#simulation" style="--i:2"><b>Simulation</b><i>What a dry-run tells you</i></a><a href="security.html#data" style="--i:3"><b>Your data</b><i>What is stored: nothing</i></a><a href="security.html#limits" style="--i:4"><b>Known limits</b><i>Read this before relying on it</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="build.html">Build</a><div class="mp"><div class="mpi"><p>Deploy a contract, see what is live, and call the gateway from code.</p><a href="deploy.html" style="--i:1"><b>Deploy a contract</b><i>A token or your own Solidity</i></a><a href="build.html#status" style="--i:2"><b>Status</b><i>What is live today</i></a><a href="build.html#roadmap" style="--i:3"><b>Roadmap</b><i>What comes next</i></a><a href="build.html#developers" style="--i:4"><b>For developers</b><i>Call the endpoint directly</i></a></div></div></div>
+      <a class="cta br" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener" aria-label="Nerby Protocol on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.2-8.3L1.8 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.3 4.7H5.5l11.2 14.5z" fill="currentColor"/></svg><span>nerbyprotocol</span></a>
+      <button type="button" class="mbtn br" id="mbtn" aria-expanded="false" aria-controls="mob">Menu</button>
+    </nav>
+  </div>
+</header>
+<div id="mob" hidden></div>
+
+<main class="pm">
+  <header class="ph">
+    <p class="n">Build · Deploy</p>
+    <h1>From a prompt<br>to a live contract.</h1>
+    <p class="lead">Fill in a token or paste your own Solidity. You see the source, the fee and the address first, then sign in your own wallet.</p>
+  </header>
+
+  <section class="ps" id="deploy">
+    <div class="dgrid">
+      <form class="dbox" id="dform" autocomplete="off">
+        <h3>1 · What to deploy</h3>
+        <div class="df"><label>Network<select id="network"></select></label></div>
+        <div class="dtabs"><button type="button" class="dtab on" data-tab="erc20">Token</button><button type="button" class="dtab" data-tab="source">Custom contract</button></div>
+        <div class="df" id="f-erc20">
+          <div class="two"><label>Token name<input type="text" id="tname" placeholder="Demo Coin" maxlength="50"></label><label>Symbol<input type="text" id="tsymbol" placeholder="DEMO" maxlength="12"></label></div>
+          <label>Total supply (whole tokens)<input type="text" id="tsupply" placeholder="1000000" inputmode="numeric"></label>
+          <label class="ck"><input type="checkbox" id="tburn">Holders can burn their own tokens</label>
+          <label class="ck"><input type="checkbox" id="tmint">Owner can mint more later</label>
+        </div>
+        <div class="df" id="f-source" hidden>
+          <label>Solidity source (one file)<textarea id="source" spellcheck="false" placeholder="// SPDX-License-Identifier: MIT&#10;pragma solidity ^0.8.24;&#10;&#10;contract MyContract { }"></textarea></label>
+          <div class="two"><label>Contract name (optional)<input type="text" id="cname"></label><label>Constructor arguments<input type="text" id="cargs" placeholder='["1000", "0x…"]'></label></div>
+        </div>
+        <div class="dact">
+          <button type="button" class="btn l br" id="bconnect">Connect wallet</button>
+          <button type="submit" class="btn s" id="breview"><small>→</small><b>Review deployment</b></button>
+        </div>
+      </form>
+      <div class="dbox">
+        <h3>2 · Review and sign</h3>
+        <div id="review" hidden>
+          <div id="rows"></div>
+          <details style="margin-top:16px"><summary>Source that will be deployed</summary><pre id="rsrc"></pre></details>
+          <pre id="rwarn" hidden></pre>
+        </div>
+        <p class="dstatus" id="dstatus" role="status">Fill in the form, then review. Nothing is sent until you confirm in your wallet.</p>
+        <div class="dact"><button type="button" class="btn s" id="bdeploy" disabled><small>✓</small><b>Deploy — sign in wallet</b></button></div>
+      </div>
+    </div>
+  </section>
+  <section class="ps" id="notes">
+    <header><p class="n"><em>Before you deploy</em></p><h2>Three things to check.</h2></header>
+    <ul class="pl"><li><b>It costs real gas and cannot be undone.</b> A deployed contract stays on the network forever. The fee shown is an estimate at the current gas price.</li><li><b>Read the source.</b> The exact code being deployed is shown in the review panel. The token template uses OpenZeppelin contracts and sends the whole supply to your wallet.</li><li><b>Your wallet does the signing.</b> This page and the Nerby Protocol server never see your keys. If the wallet shows a different network or amount than this page, reject it.</li></ul>
+  </section>
+  <aside class="pn">
+    <p class="n">Next</p>
+    <a class="btn s" href="security.html"><small>→</small><b>How it stays safe</b></a>
+    <a class="btn l br" href="index.html"><small>←</small><b>Back to home</b></a>
+  </aside>
+</main>
+
+<footer class="tf" id="footer">
+  <div class="tf-in">
+    <div class="tf-b">
+      <a class="mark" href="index.html">
+        <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+        <b>NERBY PROTOCOL</b>
+      </a>
+      <p>One endpoint between AI and every chain.</p>
+      <a class="tf-x" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener">@nerbyprotocol on X</a>
+      <a class="tf-x" href="https://x.com/leon_only1" target="_blank" rel="noopener">Founder · @leon_only1</a>
+      <a class="tf-x" href="https://x.com/Try_Wink" target="_blank" rel="noopener">Powered by @Try_Wink</a>
+      <a class="tf-x" href="mailto:hello@nerbyprotocol.xyz">hello@nerbyprotocol.xyz</a>
+      <div class="ep" data-copy="https://www.nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://www.nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
+    </div>
+    <div class="tf-c"><div><span>Product</span><a href="product.html#how">How it works</a><a href="product.html#tools">Tools</a><a href="product.html#networks">Networks</a></div><div><span>Clients</span><a href="clients.html#claude">Claude</a><a href="clients.html#editors">Cursor & VS Code</a><a href="clients.html#others">ChatGPT & others</a><a href="clients.html#prompts">First prompts</a></div><div><span>Security</span><a href="security.html#keys">No keys</a><a href="security.html#simulation">Simulation</a><a href="security.html#data">Your data</a><a href="security.html#limits">Known limits</a></div><div><span>Build</span><a href="deploy.html">Deploy a contract</a><a href="build.html#status">Status</a><a href="build.html#roadmap">Roadmap</a><a href="build.html#developers">For developers</a></div></div>
+  </div>
+  <div class="tf-l"><span>© <span id="yr">2026</span> Nerby Protocol</span><span>Nerby Protocol builds on-chain infrastructure for AI agents.</span></div>
+</footer>
+
+<script src="js/menu.js"></script>
+<script src="js/deploy.js"></script>
+</body>
+</html>

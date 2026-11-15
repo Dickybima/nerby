@@ -3,11 +3,12 @@
 const { toolList, callTool } = require('../server/tools');
 
 const VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-const INFO = { name: 'nerby-protocol', title: 'Nerby Protocol', version: '0.1.0' };
+const INFO = { name: 'nerby-protocol', title: 'Nerby Protocol', version: '0.2.0' };
 const INSTRUCTIONS =
-  'Nerby Protocol gives read access to EVM networks (call list_networks first). ' +
-  'All tools are read-only. simulate_transaction only dry-runs a transaction and returns it unsigned; ' +
-  'always show the user the simulation result and let them sign in their own wallet.';
+  'Nerby Protocol gives access to EVM networks (call list_networks first; Robinhood Chain is "robinhood"). ' +
+  'No tool signs or sends anything. simulate_transaction dry-runs a transaction. ' +
+  'prepare_deployment compiles a contract and returns a deployUrl: give that link to the user, with the fee and what the contract does, ' +
+  'so they can review it and sign in their own wallet. Never ask the user for a private key or seed phrase.';
 
 const rpcError = (id, code, message) => ({ jsonrpc: '2.0', id: id === undefined ? null : id, error: { code, message } });
 

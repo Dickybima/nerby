@@ -1,16 +1,21 @@
 'use strict';
 /* Nerby Protocol — chain tools exposed over MCP. Read-only: nothing here holds or uses a private key. */
-const { encodeFunctionData, decodeFunctionResult, parseAbiItem, formatUnits, isAddress } = require('viem');
+const { encodeFunctionData, decodeFunctionResult, encodeDeployData, getContractAddress, parseAbiItem, formatUnits, isAddress } = require('viem');
+const { compile, erc20Source, encodeRecipe, CompileError } = require('./compiler');
 
 // Public RPC endpoints. Override any of them with an env var, e.g. RPC_ETHEREUM=https://…
 const NETWORKS = {
-  ethereum: { name: 'Ethereum', chainId: 1, symbol: 'ETH', rpc: 'https://ethereum-rpc.publicnode.com' },
-  base: { name: 'Base', chainId: 8453, symbol: 'ETH', rpc: 'https://base-rpc.publicnode.com' },
-  arbitrum: { name: 'Arbitrum One', chainId: 42161, symbol: 'ETH', rpc: 'https://arbitrum-one-rpc.publicnode.com' },
-  optimism: { name: 'OP Mainnet', chainId: 10, symbol: 'ETH', rpc: 'https://optimism-rpc.publicnode.com' },
-  polygon: { name: 'Polygon', chainId: 137, symbol: 'POL', rpc: 'https://polygon-bor-rpc.publicnode.com' },
-  bsc: { name: 'BNB Smart Chain', chainId: 56, symbol: 'BNB', rpc: 'https://bsc-rpc.publicnode.com' },
-  robinhood: { name: 'Robinhood Chain', chainId: 4663, symbol: 'ETH', rpc: 'https://rpc.mainnet.chain.robinhood.com' }
+  robinhood: { name: 'Robinhood Chain', chainId: 4663, symbol: 'ETH', rpc: 'https://rpc.mainnet.chain.robinhood.com', explorer: 'https://robinhoodchain.blockscout.com', blockscout: 'https://robinhoodchain.blockscout.com' },
+  ethereum: { name: 'Ethereum', chainId: 1, symbol: 'ETH', rpc: 'https://ethereum-rpc.publicnode.com', explorer: 'https://etherscan.io', blockscout: 'https://eth.blockscout.com' },
+  base: { name: 'Base', chainId: 8453, symbol: 'ETH', rpc: 'https://base-rpc.publicnode.com', explorer: 'https://basescan.org', blockscout: 'https://base.blockscout.com' },
+  arbitrum: { name: 'Arbitrum One', chainId: 42161, symbol: 'ETH', rpc: 'https://arbitrum-one-rpc.publicnode.com', explorer: 'https://arbiscan.io', blockscout: 'https://arbitrum.blockscout.com' },
+  optimism: { name: 'OP Mainnet', chainId: 10, symbol: 'ETH', rpc: 'https://optimism-rpc.publicnode.com', explorer: 'https://optimistic.etherscan.io', blockscout: 'https://optimism.blockscout.com' },
+  polygon: { name: 'Polygon', chainId: 137, symbol: 'POL', rpc: 'https://polygon-bor-rpc.publicnode.com', explorer: 'https://polygonscan.com', blockscout: 'https://polygon.blockscout.com' },
+  bsc: { name: 'BNB Smart Chain', chainId: 56, symbol: 'BNB', rpc: 'https://bsc-rpc.publicnode.com', explorer: 'https://bscscan.com' },
+  avalanche: { name: 'Avalanche C-Chain', chainId: 43114, symbol: 'AVAX', rpc: 'https://avalanche-c-chain-rpc.publicnode.com', explorer: 'https://snowtrace.io' },
+  linea: { name: 'Linea', chainId: 59144, symbol: 'ETH', rpc: 'https://linea-rpc.publicnode.com', explorer: 'https://lineascan.build' },
+  scroll: { name: 'Scroll', chainId: 534352, symbol: 'ETH', rpc: 'https://scroll-rpc.publicnode.com', explorer: 'https://scrollscan.com' },
+  gnosis: { name: 'Gnosis', chainId: 100, symbol: 'XDAI', rpc: 'https://gnosis-rpc.publicnode.com', explorer: 'https://gnosisscan.io' }
 };
 const NETWORK_IDS = Object.keys(NETWORKS);
 
@@ -116,6 +121,70 @@ async function readContract(network, to, signature, args, block) {
   }
 }
 
+
+// ---------- verified source ----------
+async function getJson(url) {
+  let res;
+  try { res = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(15000) }); } catch (e) { return null; }
+  if (!res.ok) return null;
+  try { return await res.json(); } catch (e) { return null; }
+}
+
+async function verifiedSource(network, addr) {
+  const n = net(network);
+  const s = await getJson(`https://sourcify.dev/server/v2/contract/${n.chainId}/${addr}?fields=abi,sources,compilation,proxyResolution`);
+  if (s && s.match && s.sources) {
+    const impl = s.proxyResolution && s.proxyResolution.implementations;
+    return {
+      via: 'Sourcify', match: s.match, name: s.compilation && s.compilation.name, compiler: s.compilation && s.compilation.compilerVersion, abi: s.abi || [],
+      files: Object.keys(s.sources).map((path) => ({ path, content: s.sources[path].content || '' })),
+      implementations: impl && impl.length ? impl.map((i) => i.address) : undefined
+    };
+  }
+  if (n.blockscout) {
+    const b = await getJson(`${n.blockscout}/api/v2/smart-contracts/${addr}`);
+    if (b && b.is_verified && b.source_code) {
+      const files = [{ path: b.file_path || (b.name || 'Contract') + '.sol', content: b.source_code }]
+        .concat((b.additional_sources || []).map((f) => ({ path: f.file_path, content: f.source_code })));
+      const impl = (b.implementations || []).map((i) => i.address_hash || i.address).filter(Boolean);
+      return { via: 'Blockscout', match: b.is_partially_verified ? 'partial' : 'exact', name: b.name, compiler: b.compiler_version, abi: b.abi || [], files, implementations: impl.length ? impl : undefined };
+    }
+  }
+  return null;
+}
+
+const abiSig = (i) => `${i.name}(${(i.inputs || []).map((x) => x.type).join(',')})` +
+  (i.type === 'function' ? ` ${i.stateMutability || ''}` + ((i.outputs || []).length ? ` returns (${i.outputs.map((x) => x.type).join(',')})` : '') : '');
+
+// ---------- deployment ----------
+function buildSource(a) {
+  if (a.template !== undefined && a.template !== null && a.template !== '') {
+    if (a.template !== 'erc20') throw new ToolError('Unknown template. Available: "erc20".');
+    let t;
+    try { t = erc20Source(a.params); } catch (e) { if (e instanceof CompileError) throw new ToolError(e.message); throw e; }
+    return { source: t.source, contractName: t.contractName, recipe: { t: 'erc20', p: t.params } };
+  }
+  if (!a.source) throw new ToolError('Give either template: "erc20" with params, or source with your own Solidity code.');
+  return { source: String(a.source), contractName: a.contractName || undefined, recipe: { t: 'source', s: String(a.source), c: a.contractName || undefined } };
+}
+
+function compiled(source, contractName) {
+  try { return compile(source, contractName); } catch (e) {
+    if (e instanceof CompileError) throw new ToolError(e.message);
+    throw e;
+  }
+}
+
+const sourceProps = {
+  template: { type: 'string', enum: ['erc20'], description: 'Built-in template. "erc20" is a fixed-supply token on OpenZeppelin contracts.' },
+  params: {
+    type: 'object', description: 'Template parameters. erc20: name, symbol, supply (whole tokens, as a string), burnable (boolean), mintable (boolean, owner can mint more).',
+    properties: { name: { type: 'string' }, symbol: { type: 'string' }, supply: { type: 'string' }, burnable: { type: 'boolean' }, mintable: { type: 'boolean' } }
+  },
+  source: { type: 'string', description: 'Your own Solidity source as a single file (use instead of template). Imports from @openzeppelin/contracts are available; pragma must allow Solidity 0.8.38.' },
+  contractName: { type: 'string', description: 'Which contract to deploy when the source defines more than one.' }
+};
+
 const netProp = { type: 'string', enum: NETWORK_IDS, description: 'Network to query.' };
 const addrProp = (d) => ({ type: 'string', description: d + ' (0x address).' });
 const blockProp = { type: ['string', 'integer'], description: 'Block number, or "latest" (default).' };
@@ -123,9 +192,9 @@ const blockProp = { type: ['string', 'integer'], description: 'Block number, or 
 const TOOLS = [
   {
     name: 'list_networks',
-    description: 'List the networks Nerby Protocol can reach, with chain IDs and native currency.',
+    description: 'List the networks Nerby Protocol can reach, with chain IDs, native currency and block explorer.',
     inputSchema: { type: 'object', properties: {} },
-    run: async () => NETWORK_IDS.map((id) => ({ id, name: NETWORKS[id].name, chainId: NETWORKS[id].chainId, nativeCurrency: NETWORKS[id].symbol }))
+    run: async () => NETWORK_IDS.map((id) => ({ id, name: NETWORKS[id].name, chainId: NETWORKS[id].chainId, nativeCurrency: NETWORKS[id].symbol, explorer: NETWORKS[id].explorer, publicRpc: NETWORKS[id].rpc }))
   },
   {
     name: 'get_balance',
@@ -266,6 +335,106 @@ const TOOLS = [
     run: async (a) => {
       const [gp, tip] = await Promise.all([rpc(a.network, 'eth_gasPrice', []), rpc(a.network, 'eth_maxPriorityFeePerGas', []).catch(() => null)]);
       return { network: a.network, gasPriceGwei: formatUnits(big(gp), 9), priorityFeeGwei: tip ? formatUnits(big(tip), 9) : null };
+    }
+  },
+  {
+    name: 'get_contract_source',
+    description: 'Look up the verified source code of a contract (Sourcify, then Blockscout). part "overview" (default) returns the contract name, compiler, file list and function signatures; "abi" returns the full ABI; "source" returns the file contents.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        network: netProp, address: addrProp('Contract to look up'),
+        part: { type: 'string', enum: ['overview', 'abi', 'source'], description: 'What to return (default "overview").' },
+        file: { type: 'string', description: 'With part "source": return only this file path.' }
+      },
+      required: ['network', 'address']
+    },
+    run: async (a) => {
+      const addr = address(a.address, 'address'), n = net(a.network);
+      const v = await verifiedSource(a.network, addr);
+      const explorer = `${n.explorer}/address/${addr}`;
+      if (!v) return { address: addr, network: a.network, verified: false, note: 'No verified source was found on Sourcify' + (n.blockscout ? ' or Blockscout' : '') + '. The contract may be unverified, or verified only on another explorer.', explorer };
+      const head = { address: addr, network: a.network, verified: true, via: v.via, match: v.match, name: v.name, compiler: v.compiler, explorer };
+      if (v.implementations) { head.proxyImplementations = v.implementations; head.note = 'This is a proxy. Look up an implementation address to see the logic.'; }
+      const part = a.part || 'overview';
+      if (part === 'abi') return Object.assign(head, { abi: v.abi });
+      if (part === 'source') {
+        let files = v.files;
+        if (a.file) { files = files.filter((f) => f.path === a.file); if (!files.length) throw new ToolError('No such file. Available: ' + v.files.map((f) => f.path).join(', ')); }
+        let left = 60000; const out = [];
+        for (const f of files) {
+          if (left <= 0) { out.push({ path: f.path, omitted: true, characters: f.content.length }); continue; }
+          out.push(f.content.length > left ? { path: f.path, content: f.content.slice(0, left), truncated: true, characters: f.content.length } : { path: f.path, content: f.content });
+          left -= f.content.length;
+        }
+        return Object.assign(head, { files: out });
+      }
+      return Object.assign(head, {
+        files: v.files.map((f) => ({ path: f.path, characters: f.content.length })),
+        functions: v.abi.filter((i) => i.type === 'function').map(abiSig),
+        events: v.abi.filter((i) => i.type === 'event').map(abiSig)
+      });
+    }
+  },
+  {
+    name: 'compile_contract',
+    description: 'Compile a Solidity contract (or the built-in erc20 template) and report errors, warnings, the ABI and bytecode size. Nothing is deployed. Use this to check a contract before prepare_deployment.',
+    inputSchema: { type: 'object', properties: sourceProps },
+    run: async (a) => {
+      const b = buildSource(a), c = compiled(b.source, b.contractName);
+      const out = { contract: c.name, compiler: c.compiler, openzeppelin: c.openzeppelin, bytecodeBytes: (c.bytecode.length - 2) / 2, constructorInputs: (c.abi.find((i) => i.type === 'constructor') || { inputs: [] }).inputs.map((i) => `${i.type} ${i.name}`), functions: c.abi.filter((i) => i.type === 'function').map(abiSig), warnings: c.warnings };
+      if (out.bytecodeBytes > 24576) out.note = 'The bytecode is over the 24,576-byte contract size limit and would fail to deploy.';
+      if (a.template) out.source = b.source;
+      return out;
+    }
+  },
+  {
+    name: 'prepare_deployment',
+    description: 'Compile a contract and prepare its deployment on a network: gas and fee estimate, the address it would get, and a link to the Nerby Protocol deploy page where the user reviews it and signs with their own wallet. Nothing is signed or sent by this tool. Always give the user the deployUrl and tell them the fee and what the contract does.',
+    inputSchema: {
+      type: 'object',
+      properties: Object.assign({ network: netProp, from: addrProp('Wallet that will deploy and pay the gas') }, sourceProps, {
+        constructorArgs: { type: 'array', items: {}, description: 'Constructor arguments in order, for your own source. Pass integers as strings.' },
+        includeData: { type: 'boolean', description: 'Also return the full deployment calldata (large). Default false.' }
+      }),
+      required: ['network', 'from']
+    },
+    run: async (a) => {
+      const n = net(a.network), from = address(a.from, 'from');
+      const b = buildSource(a), c = compiled(b.source, b.contractName);
+      const ctor = c.abi.find((i) => i.type === 'constructor') || { inputs: [] };
+      const args = a.constructorArgs || [];
+      if (args.length !== ctor.inputs.length) throw new ToolError(`The constructor takes ${ctor.inputs.length} argument(s) (${ctor.inputs.map((i) => i.type + ' ' + i.name).join(', ') || 'none'}), got ${args.length}.`);
+      let data;
+      try { data = encodeDeployData({ abi: c.abi, bytecode: c.bytecode, args: args.map((v, i) => coerce(ctor.inputs[i].type, v)) }); } catch (e) {
+        if (e instanceof ToolError) throw e;
+        throw new ToolError('Could not encode the constructor arguments: ' + (e.shortMessage || e.message));
+      }
+      const [nonce, gasPrice, balance] = await Promise.all([rpc(a.network, 'eth_getTransactionCount', [from, 'pending']), rpc(a.network, 'eth_gasPrice', []), rpc(a.network, 'eth_getBalance', [from, 'latest'])]);
+      const out = { network: a.network, chainId: n.chainId, contract: c.name, from, bytecodeBytes: (data.length - 2) / 2, wouldSucceed: true };
+      let gas = null;
+      try { gas = big(await rpc(a.network, 'eth_estimateGas', [{ from, data }])); } catch (e) {
+        if (!e.rpc) throw e;
+        out.wouldSucceed = false; out.revertReason = e.message;
+      }
+      if (gas !== null) {
+        const fee = gas * big(gasPrice);
+        out.gasEstimate = gas; out.gasPriceGwei = formatUnits(big(gasPrice), 9);
+        out.estimatedFee = formatUnits(fee, 18) + ' ' + n.symbol;
+        out.balance = formatUnits(big(balance), 18) + ' ' + n.symbol;
+        out.enoughBalance = big(balance) >= fee;
+        out.predictedAddress = getContractAddress({ from, nonce: big(nonce) });
+        out.unsignedTransaction = { chainId: n.chainId, from, to: null, value: '0x0', nonce: num(nonce), gas: toHex(gas * 12n / 10n), data: a.includeData ? data : `(${out.bytecodeBytes} bytes; pass includeData to get it)` };
+      }
+      if (c.warnings.length) out.warnings = c.warnings;
+      if (b.recipe.t === 'erc20') out.source = b.source;
+      const link = encodeRecipe(Object.assign({ v: 1, n: a.network, a: args.length ? args.map(String) : undefined }, b.recipe));
+      if (link.length <= 6000) out.deployUrl = link;
+      else out.deployPage = 'https://www.nerbyprotocol.xyz/deploy.html (the source is too long for a link: ask the user to paste it into the Custom contract box there)';
+      out.note = out.wouldSucceed
+        ? 'Nothing was sent. The user deploys by opening the deploy page, reviewing the details and signing in their own wallet. The predicted address assumes no other transaction is sent from this wallet first.'
+        : 'This deployment would fail if sent now. Nothing was sent.';
+      return out;
     }
   },
   {
