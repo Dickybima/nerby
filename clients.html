@@ -6,7 +6,7 @@
 <title>Clients — Nerby Protocol</title>
 <meta name="description" content="Connect Claude, Claude Code, Cursor, VS Code, ChatGPT or any MCP client to Nerby Protocol in a minute.">
 <meta name="theme-color" content="#080c0a">
-<link rel="canonical" href="https://nerbyprotocol.xyz/clients.html">
+<link rel="canonical" href="https://www.nerbyprotocol.xyz/clients.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Nerby Protocol">
 <meta property="og:title" content="Clients — Nerby Protocol">
@@ -51,45 +51,45 @@
 
   <section class="ps" id="endpoint">
     <header><p class="n"><em>00 · The endpoint</em></p><h2>One URL for every client.</h2><p class="lead">Everything below comes down to pasting this address into your AI app. There is no key to request and nothing to sign up for.</p></header>
-    <div class="ep" data-copy="https://nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
+    <div class="ep" data-copy="https://www.nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://www.nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
   </section>
   <section class="ps" id="claude">
     <header><p class="n"><em>01 · Claude</em></p><h2>Claude apps and Claude Code.</h2></header>
-    <div class="cards c2"><article class="card br"><small>Claude on web and desktop</small><h3>Add a custom connector</h3><ol><li>Open <b>Settings → Connectors</b>.</li><li>Choose <b>Add custom connector</b>.</li><li>Name it <b>Nerby Protocol</b> and paste the endpoint URL.</li><li>Start a chat and enable the connector.</li></ol><p class="fine">Custom connectors depend on your Claude plan.</p></article><article class="card br"><small>Claude Code</small><h3>One command</h3><p>Run this in your terminal, then ask Claude Code a chain question.</p><div class="cb"><pre><code>claude mcp add --transport http nerby https://nerbyprotocol.xyz/mcp</code></pre><button type="button" class="cbb" data-copy="claude mcp add --transport http nerby https://nerbyprotocol.xyz/mcp">Copy</button></div></article></div>
+    <div class="cards c2"><article class="card br"><small>Claude on web and desktop</small><h3>Add a custom connector</h3><ol><li>Open <b>Settings → Connectors</b>.</li><li>Choose <b>Add custom connector</b>.</li><li>Name it <b>Nerby Protocol</b> and paste the endpoint URL.</li><li>Start a chat and enable the connector.</li></ol><p class="fine">Custom connectors depend on your Claude plan.</p></article><article class="card br"><small>Claude Code</small><h3>One command</h3><p>Run this in your terminal, then ask Claude Code a chain question.</p><div class="cb"><pre><code>claude mcp add --transport http nerby https://www.nerbyprotocol.xyz/mcp</code></pre><button type="button" class="cbb" data-copy="claude mcp add --transport http nerby https://www.nerbyprotocol.xyz/mcp">Copy</button></div></article></div>
   </section>
   <section class="ps" id="editors">
     <header><p class="n"><em>02 · Editors</em></p><h2>Cursor and VS Code.</h2><p class="lead">Both read a small JSON file. Create it if it does not exist, then reload the editor.</p></header>
     <div class="cards c2"><article class="card br"><small>Cursor · .cursor/mcp.json</small><h3>Cursor</h3><div class="cb"><pre><code>{
   &quot;mcpServers&quot;: {
     &quot;nerby&quot;: {
-      &quot;url&quot;: &quot;https://nerbyprotocol.xyz/mcp&quot;
+      &quot;url&quot;: &quot;https://www.nerbyprotocol.xyz/mcp&quot;
     }
   }
 }</code></pre><button type="button" class="cbb" data-copy="{
   &quot;mcpServers&quot;: {
     &quot;nerby&quot;: {
-      &quot;url&quot;: &quot;https://nerbyprotocol.xyz/mcp&quot;
+      &quot;url&quot;: &quot;https://www.nerbyprotocol.xyz/mcp&quot;
     }
   }
 }">Copy</button></div></article><article class="card br"><small>VS Code · .vscode/mcp.json</small><h3>VS Code</h3><div class="cb"><pre><code>{
   &quot;servers&quot;: {
     &quot;nerby&quot;: {
       &quot;type&quot;: &quot;http&quot;,
-      &quot;url&quot;: &quot;https://nerbyprotocol.xyz/mcp&quot;
+      &quot;url&quot;: &quot;https://www.nerbyprotocol.xyz/mcp&quot;
     }
   }
 }</code></pre><button type="button" class="cbb" data-copy="{
   &quot;servers&quot;: {
     &quot;nerby&quot;: {
       &quot;type&quot;: &quot;http&quot;,
-      &quot;url&quot;: &quot;https://nerbyprotocol.xyz/mcp&quot;
+      &quot;url&quot;: &quot;https://www.nerbyprotocol.xyz/mcp&quot;
     }
   }
 }">Copy</button></div></article></div>
   </section>
   <section class="ps" id="others">
     <header><p class="n"><em>03 · ChatGPT and others</em></p><h2>Any client that speaks MCP.</h2></header>
-    <div class="cards c2"><article class="card br"><small>ChatGPT</small><h3>Custom connector</h3><p>In ChatGPT, turn on developer mode under <b>Settings → Connectors</b>, create a new connector and paste the endpoint URL. No authentication is needed.</p><p class="fine">Availability depends on your ChatGPT plan and workspace settings.</p></article><article class="card br"><small>Zed and local-only clients</small><h3>Bridge with mcp-remote</h3><p>Clients that only launch local servers can reach the endpoint through the <code>mcp-remote</code> bridge. Use this as the server command:</p><div class="cb"><pre><code>npx -y mcp-remote https://nerbyprotocol.xyz/mcp</code></pre><button type="button" class="cbb" data-copy="npx -y mcp-remote https://nerbyprotocol.xyz/mcp">Copy</button></div></article></div>
+    <div class="cards c2"><article class="card br"><small>ChatGPT</small><h3>Custom connector</h3><p>In ChatGPT, turn on developer mode under <b>Settings → Connectors</b>, create a new connector and paste the endpoint URL. No authentication is needed.</p><p class="fine">Availability depends on your ChatGPT plan and workspace settings.</p></article><article class="card br"><small>Zed and local-only clients</small><h3>Bridge with mcp-remote</h3><p>Clients that only launch local servers can reach the endpoint through the <code>mcp-remote</code> bridge. Use this as the server command:</p><div class="cb"><pre><code>npx -y mcp-remote https://www.nerbyprotocol.xyz/mcp</code></pre><button type="button" class="cbb" data-copy="npx -y mcp-remote https://www.nerbyprotocol.xyz/mcp">Copy</button></div></article></div>
   </section>
   <section class="ps" id="prompts">
     <header><p class="n"><em>04 · First prompts</em></p><h2>Things to try once connected.</h2></header>
@@ -114,7 +114,7 @@
       <a class="tf-x" href="https://x.com/leon_only1" target="_blank" rel="noopener">Founder · @leon_only1</a>
       <a class="tf-x" href="https://x.com/Try_Wink" target="_blank" rel="noopener">Powered by @Try_Wink</a>
       <a class="tf-x" href="mailto:hello@nerbyprotocol.xyz">hello@nerbyprotocol.xyz</a>
-      <div class="ep" data-copy="https://nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
+      <div class="ep" data-copy="https://www.nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://www.nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
     </div>
     <div class="tf-c"><div><span>Product</span><a href="product.html#how">How it works</a><a href="product.html#tools">Tools</a><a href="product.html#networks">Networks</a></div><div><span>Clients</span><a href="clients.html#claude">Claude</a><a href="clients.html#editors">Cursor & VS Code</a><a href="clients.html#others">ChatGPT & others</a><a href="clients.html#prompts">First prompts</a></div><div><span>Security</span><a href="security.html#keys">No keys</a><a href="security.html#simulation">Simulation</a><a href="security.html#data">Your data</a><a href="security.html#limits">Known limits</a></div><div><span>Build</span><a href="build.html#status">Status</a><a href="build.html#roadmap">Roadmap</a><a href="build.html#developers">For developers</a></div></div>
   </div>
