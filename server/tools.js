@@ -9,7 +9,8 @@ const NETWORKS = {
   arbitrum: { name: 'Arbitrum One', chainId: 42161, symbol: 'ETH', rpc: 'https://arbitrum-one-rpc.publicnode.com' },
   optimism: { name: 'OP Mainnet', chainId: 10, symbol: 'ETH', rpc: 'https://optimism-rpc.publicnode.com' },
   polygon: { name: 'Polygon', chainId: 137, symbol: 'POL', rpc: 'https://polygon-bor-rpc.publicnode.com' },
-  bsc: { name: 'BNB Smart Chain', chainId: 56, symbol: 'BNB', rpc: 'https://bsc-rpc.publicnode.com' }
+  bsc: { name: 'BNB Smart Chain', chainId: 56, symbol: 'BNB', rpc: 'https://bsc-rpc.publicnode.com' },
+  robinhood: { name: 'Robinhood Chain', chainId: 4663, symbol: 'ETH', rpc: 'https://rpc.mainnet.chain.robinhood.com' }
 };
 const NETWORK_IDS = Object.keys(NETWORKS);
 
