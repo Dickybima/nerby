@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Explore — Nerby Protocol</title>
+<meta name="description" content="Look up any wallet, token, contract or transaction on eleven networks, live from the chain, with Nerby Protocol.">
+<meta name="theme-color" content="#080c0a">
+<link rel="canonical" href="https://www.nerbyprotocol.xyz/explore.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nerby Protocol">
+<meta property="og:title" content="Explore — Nerby Protocol">
+<meta property="og:description" content="Look up any wallet, token, contract or transaction on eleven networks, live from the chain, with Nerby Protocol.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:site" content="@nerbyprotocol">
+<link rel="icon" type="image/svg+xml" href="img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&family=Mona+Sans:wdth,wght@100..125,400..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/page.css">
+</head>
+<body class="page">
+<div class="pbg" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="in">
+    <a class="mark" href="index.html" aria-label="Nerby Protocol home">
+      <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+      <b>NERBY PROTOCOL</b>
+    </a>
+    <nav class="menu" aria-label="Main">
+      <div class="mi"><a class="mt" href="explore.html">Explore</a><div class="mp"><div class="mpi"><p>Look things up live from the chain, right here in the browser.</p><a href="explore.html" style="--i:1"><b>Scan an address</b><i>Wallets, tokens and contracts</i></a><a href="explore.html#tx" style="--i:2"><b>Inspect a transaction</b><i>Status, fee and token transfers</i></a><a href="token.html" style="--i:3"><b>$NERBY live</b><i>Supply and burns, straight from the chain</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="product.html">Product</a><div class="mp"><div class="mpi"><p>What the gateway does and what your AI can ask it.</p><a href="product.html#how" style="--i:1"><b>How it works</b><i>From a question to live chain data</i></a><a href="product.html#tools" style="--i:2"><b>Tools</b><i>All fourteen tools, with example prompts</i></a><a href="product.html#networks" style="--i:3"><b>Networks</b><i>Eleven chains, one endpoint</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="clients.html">Clients</a><div class="mp"><div class="mpi"><p>Step-by-step setup for the AI apps you already use.</p><a href="clients.html#claude" style="--i:1"><b>Claude</b><i>Claude apps and Claude Code</i></a><a href="clients.html#editors" style="--i:2"><b>Cursor & VS Code</b><i>One small config file</i></a><a href="clients.html#others" style="--i:3"><b>ChatGPT & others</b><i>Any client that speaks MCP</i></a><a href="clients.html#prompts" style="--i:4"><b>First prompts</b><i>Things to try once connected</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="security.html">Security</a><div class="mp"><div class="mpi"><p>What Nerby Protocol can and cannot do with your assets.</p><a href="security.html#keys" style="--i:1"><b>No keys</b><i>The server cannot sign or send</i></a><a href="security.html#simulation" style="--i:2"><b>Simulation</b><i>What a dry-run tells you</i></a><a href="security.html#data" style="--i:3"><b>Your data</b><i>What is stored: nothing</i></a><a href="security.html#limits" style="--i:4"><b>Known limits</b><i>Read this before relying on it</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="build.html">Build</a><div class="mp"><div class="mpi"><p>Deploy a contract, see what is live, and call the gateway from code.</p><a href="deploy.html" style="--i:1"><b>Deploy a contract</b><i>A token or your own Solidity</i></a><a href="build.html#status" style="--i:2"><b>Status</b><i>What is live today</i></a><a href="build.html#roadmap" style="--i:3"><b>Roadmap</b><i>What comes next</i></a><a href="build.html#developers" style="--i:4"><b>For developers</b><i>Call the endpoint directly</i></a></div></div></div>
+      <a class="cta br" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener" aria-label="Nerby Protocol on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.2-8.3L1.8 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.3 4.7H5.5l11.2 14.5z" fill="currentColor"/></svg><span>nerbyprotocol</span></a>
+      <button type="button" class="mbtn br" id="mbtn" aria-expanded="false" aria-controls="mob">Menu</button>
+    </nav>
+  </div>
+</header>
+<div id="mob" hidden></div>
+
+<main class="pm">
+  <header class="ph">
+    <p class="n">Explore</p>
+    <h1>Ask the chain.<br>Right here.</h1>
+    <p class="lead">Paste an address or a transaction hash. No wallet, no sign-up, no AI app needed.</p>
+  </header>
+
+  <section class="ps" id="scan">
+    <form class="xrow" id="xform" autocomplete="off">
+      <select id="xnet" aria-label="Network"></select>
+      <input type="text" id="xq" placeholder="Address or transaction hash (0x…)" spellcheck="false" aria-label="Address or transaction hash">
+      <button type="submit" class="btn s"><small>→</small><b>Look up</b></button>
+    </form>
+    <div class="xtry" id="tx"><span>Try</span>
+      <button type="button" data-try="robinhood/0xd17d0eabf76f2b3144da726efd341761f4697113">$NERBY token</button>
+      <button type="button" data-try="ethereum/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2">WETH on Ethereum</button>
+      <button type="button" data-try="ethereum/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">A wallet</button>
+      <button type="button" data-try="robinhood/0xb4c8af8677fdb6ee5da6093e275642362e24d84464ab2d516fa1ad3acf972e3b">A burn transaction</button>
+    </div>
+    <p class="dstatus" id="xstatus" role="status"></p>
+    <div id="xout"></div>
+  </section>
+  <section class="ps" id="about">
+    <header><p class="n"><em>How this works</em></p><h2>The same tools your AI uses.</h2><p class="lead">This page calls the Nerby Protocol endpoint from your browser. Everything shown is read live from the network at the moment you ask; nothing is stored and no wallet is needed.</p></header>
+    <div class="cards c3"><article class="card br"><small>Addresses</small><h3>Wallet, token or contract</h3><p>Paste any address to see its balance, whether it is a contract, and for tokens the supply, burned amount and owner.</p></article><article class="card br"><small>Source</small><h3>Verified or not</h3><p>For contracts, see whether the source code is verified and which functions it exposes.</p></article><article class="card br"><small>Transactions</small><h3>What actually happened</h3><p>Paste a transaction hash to see its status, fee and the token transfers inside it.</p></article></div>
+  </section>
+  <aside class="pn">
+    <p class="n">Next</p>
+    <a class="btn s" href="clients.html"><small>→</small><b>Connect your AI</b></a>
+    <a class="btn l br" href="index.html"><small>←</small><b>Back to home</b></a>
+  </aside>
+</main>
+
+<footer class="tf" id="footer">
+  <div class="tf-in">
+    <div class="tf-b">
+      <a class="mark" href="index.html">
+        <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+        <b>NERBY PROTOCOL</b>
+      </a>
+      <p>One endpoint between AI and every chain.</p>
+      <a class="tf-x" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener">@nerbyprotocol on X</a>
+      <a class="tf-x" href="mailto:hello@nerbyprotocol.xyz">hello@nerbyprotocol.xyz</a>
+      <div class="ep" data-copy="https://www.nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://www.nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
+      <div class="ep ca" data-copy="0xd17d0eabf76f2b3144da726efd341761f4697113"><span class="ep-l">$NERBY · CA · Robinhood Chain</span><button type="button" class="ep-b" aria-label="Copy $NERBY contract address"><code>0xd17d0eabf76f2b3144da726efd341761f4697113</code><i>Copy</i></button></div>
+      <a class="tf-x" href="https://robinhoodchain.blockscout.com/token/0xd17d0eabf76f2b3144da726efd341761f4697113" target="_blank" rel="noopener">View $NERBY on the explorer</a>
+    </div>
+    <div class="tf-c"><div><span>Explore</span><a href="explore.html">Scan an address</a><a href="explore.html#tx">Inspect a transaction</a><a href="token.html">$NERBY live</a></div><div><span>Product</span><a href="product.html#how">How it works</a><a href="product.html#tools">Tools</a><a href="product.html#networks">Networks</a></div><div><span>Clients</span><a href="clients.html#claude">Claude</a><a href="clients.html#editors">Cursor & VS Code</a><a href="clients.html#others">ChatGPT & others</a><a href="clients.html#prompts">First prompts</a></div><div><span>Security</span><a href="security.html#keys">No keys</a><a href="security.html#simulation">Simulation</a><a href="security.html#data">Your data</a><a href="security.html#limits">Known limits</a></div><div><span>Build</span><a href="deploy.html">Deploy a contract</a><a href="build.html#status">Status</a><a href="build.html#roadmap">Roadmap</a><a href="build.html#developers">For developers</a></div></div>
+  </div>
+  <div class="tf-l"><span>© <span id="yr">2026</span> Nerby Protocol</span><span>Nerby Protocol builds on-chain infrastructure for AI agents.</span></div>
+</footer>
+
+<script src="js/menu.js"></script>
+<script src="js/nerby.js"></script>
+<script src="js/explore.js"></script>
+</body>
+</html>

@@ -14,6 +14,14 @@
 
   document.getElementById('yr').textContent = new Date().getFullYear();
 
+  // hero search: hand the address to the Explore page
+  var hs = document.getElementById('hsearch');
+  if (hs) hs.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var q = document.getElementById('hq').value.trim();
+    location.href = 'explore.html' + (/^0x[0-9a-fA-F]{40,64}$/.test(q) ? '#robinhood/' + q : '');
+  });
+
   // the public MCP endpoint; on a local preview, point at the local server instead
   var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   var endpoint = (local ? location.origin : 'https://www.nerbyprotocol.xyz') + '/mcp';
