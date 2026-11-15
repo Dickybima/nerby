@@ -67,5 +67,20 @@ window.Nerby = (function () {
     return Math.floor(s / 86400) + 'd ago';
   }
 
-  return { DEAD: DEAD, ZERO: ZERO, batch: batch, units: units, trimNum: trimNum, percent: percent, short: short, el: el, link: link, tile: tile, ago: ago };
+  // renders the result of the check_token_safety tool into a container
+  function safety(box, d) {
+    box.textContent = '';
+    var head = el('div', 'sfhead ' + (d.checks.some(function (c) { return c.level === 'warn'; }) ? 'warn' : 'ok'));
+    head.appendChild(el('b', '', d.summary));
+    head.appendChild(el('small', '', d.note));
+    box.appendChild(head);
+    d.checks.forEach(function (c) {
+      var row = el('div', 'sfrow ' + c.level);
+      row.appendChild(el('i', '', c.level === 'ok' ? '✓' : c.level === 'warn' ? '!' : 'i'));
+      var t = el('div'); t.appendChild(el('b', '', c.title)); t.appendChild(el('span', '', c.detail));
+      row.appendChild(t); box.appendChild(row);
+    });
+  }
+
+  return { safety: safety, DEAD: DEAD, ZERO: ZERO, batch: batch, units: units, trimNum: trimNum, percent: percent, short: short, el: el, link: link, tile: tile, ago: ago };
 })();

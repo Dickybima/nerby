@@ -1,6 +1,6 @@
 'use strict';
 /* Nerby Protocol — chain tools exposed over MCP. Read-only: nothing here holds or uses a private key. */
-const { encodeFunctionData, decodeFunctionResult, encodeDeployData, getContractAddress, parseAbiItem, formatUnits, isAddress } = require('viem');
+const { encodeFunctionData, decodeFunctionResult, encodeDeployData, getContractAddress, parseAbiItem, formatUnits, isAddress, toFunctionSelector } = require('viem');
 const { compile, erc20Source, encodeRecipe, CompileError } = require('./compiler');
 
 // Public RPC endpoints. Override any of them with an env var, e.g. RPC_ETHEREUM=https://…
@@ -155,6 +155,23 @@ async function verifiedSource(network, addr) {
 
 const abiSig = (i) => `${i.name}(${(i.inputs || []).map((x) => x.type).join(',')})` +
   (i.type === 'function' ? ` ${i.stateMutability || ''}` + ((i.outputs || []).length ? ` returns (${i.outputs.map((x) => x.type).join(',')})` : '') : '');
+
+// ---------- token safety ----------
+// Function signatures whose presence in a contract's dispatcher gives someone extra power over holders.
+const RISKY = [
+  { key: 'mint', label: 'Can create new tokens', sigs: ['mint(address,uint256)', 'mint(uint256)', 'mintTo(address,uint256)'] },
+  { key: 'pause', label: 'Can pause transfers', sigs: ['pause()', 'setPaused(bool)', 'setTradingEnabled(bool)', 'enableTrading()', 'setTrading(bool)'] },
+  { key: 'blacklist', label: 'Can block addresses', sigs: ['blacklist(address)', 'addToBlacklist(address)', 'addBlackList(address)', 'setBlacklist(address,bool)', 'setBots(address[])', 'blockBots(address[])', 'setIsBlacklisted(address,bool)'] },
+  { key: 'fees', label: 'Can change trading fees', sigs: ['setFee(uint256)', 'setFees(uint256,uint256)', 'setTaxFee(uint256)', 'setBuyFee(uint256)', 'setSellFee(uint256)', 'setTaxes(uint256,uint256)', 'updateFees(uint256,uint256)', 'setBuyTax(uint256)', 'setSellTax(uint256)'] },
+  { key: 'limits', label: 'Can change transaction limits', sigs: ['setMaxTxAmount(uint256)', 'setMaxWalletSize(uint256)', 'setMaxWallet(uint256)', 'setMaxTx(uint256)', 'removeLimits()'] },
+  { key: 'upgrade', label: 'Code can be replaced (upgradeable)', sigs: ['upgradeTo(address)', 'upgradeToAndCall(address,bytes)'] }
+].map((r) => Object.assign(r, { sels: r.sigs.map((g) => toFunctionSelector('function ' + g).slice(2)) }));
+const EIP1967_IMPL = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
+
+function selectorsIn(code) {
+  const hex = code.toLowerCase();
+  return RISKY.map((r) => ({ key: r.key, label: r.label, found: r.sigs.filter((g, i) => hex.includes('63' + r.sels[i])) }));
+}
 
 // ---------- deployment ----------
 function buildSource(a) {
@@ -374,6 +391,45 @@ const TOOLS = [
         functions: v.abi.filter((i) => i.type === 'function').map(abiSig),
         events: v.abi.filter((i) => i.type === 'event').map(abiSig)
       });
+    }
+  },
+  {
+    name: 'check_token_safety',
+    description: 'Quick safety check of a token or contract: whether the deployer still has powers such as minting, pausing, blocking addresses, changing fees or replacing the code; whether ownership was renounced; whether the source is verified; and how much supply is burned. Reads the bytecode and storage directly. A heuristic first look, not an audit.',
+    inputSchema: { type: 'object', properties: { network: netProp, address: addrProp('Token or contract to check') }, required: ['network', 'address'] },
+    run: async (a) => {
+      const n = net(a.network), addr = address(a.address, 'address');
+      let code = await rpc(a.network, 'eth_getCode', [addr, 'latest']);
+      if (code === '0x' || /^0xef0100/i.test(code)) return { address: addr, network: a.network, isContract: false, note: 'This address is a wallet, not a contract, so there is nothing to check.' };
+      const implSlot = await rpc(a.network, 'eth_getStorageAt', [addr, EIP1967_IMPL, 'latest']).catch(() => '0x0');
+      const impl = big(implSlot) ? '0x' + implSlot.slice(-40) : null;
+      if (impl) code += (await rpc(a.network, 'eth_getCode', [impl, 'latest']).catch(() => '')).slice(2);
+      const read = (fn, args) => readContract(a.network, addr, fn, args || [], 'latest').then((r) => r.result).catch(() => undefined);
+      const [owner, name, symbol, decimals, supply, dead, zero, source] = await Promise.all([
+        read('owner() view returns (address)'), read('name() view returns (string)'), read('symbol() view returns (string)'), read('decimals() view returns (uint8)'),
+        read('totalSupply() view returns (uint256)'), read('balanceOf(address) view returns (uint256)', ['0x000000000000000000000000000000000000dEaD']),
+        read('balanceOf(address) view returns (uint256)', ['0x0000000000000000000000000000000000000000']),
+        verifiedSource(a.network, addr).catch(() => null)
+      ]);
+      const renounced = owner !== undefined && /^0x0{40}$/i.test(owner);
+      const hasOwner = owner !== undefined && !renounced;
+      const powers = selectorsIn(code).filter((p) => p.found.length);
+      const checks = [];
+      checks.push(hasOwner
+        ? { level: powers.length ? 'warn' : 'info', title: 'Has an owner', detail: `Owner is ${owner}.` + (powers.length ? ' The owner may be able to use the powers listed below.' : '') }
+        : { level: 'ok', title: renounced ? 'Ownership renounced' : 'No owner function', detail: renounced ? 'owner() returns the zero address, so no one holds owner rights.' : 'The contract has no owner() function.' });
+      for (const p of powers) checks.push({ level: hasOwner || p.key === 'upgrade' ? 'warn' : 'info', title: p.label, detail: 'Found ' + p.found.join(', ') + '.' + (hasOwner ? '' : ' Without an owner these may be locked or limited to other roles; check the source.') });
+      if (impl) checks.push({ level: 'warn', title: 'Proxy contract', detail: `The logic lives at ${impl} and can be swapped by whoever controls the proxy.` });
+      if (!powers.length && !impl) checks.push({ level: 'ok', title: 'No common admin functions', detail: 'None of the usual mint, pause, blacklist, fee, limit or upgrade functions were found in the bytecode.' });
+      checks.push(source ? { level: 'ok', title: 'Source verified', detail: `Verified on ${source.via}${source.name ? ' as ' + source.name : ''}.` } : { level: 'warn', title: 'Source not verified', detail: 'The code cannot be read on Sourcify or Blockscout, so these checks rely on the bytecode alone.' });
+      const out = { address: addr, network: a.network, explorer: `${n.explorer}/address/${addr}`, isContract: true, checks };
+      if (supply !== undefined) {
+        const burned = (dead || 0n) + (zero || 0n), dec = Number(decimals === undefined ? 18 : decimals);
+        Object.assign(out, { token: { name, symbol, decimals: dec, totalSupply: formatUnits(supply, dec), burned: formatUnits(burned, dec), burnedPercent: supply ? Number(burned * 100000n / supply) / 1000 : 0 } });
+      }
+      out.summary = checks.filter((c) => c.level === 'warn').length ? 'Some powers or unknowns need a closer look.' : 'No red flags found in this quick check.';
+      out.note = 'Heuristic check based on function signatures in the bytecode. It can miss custom admin functions and is not an audit.';
+      return out;
     }
   },
   {

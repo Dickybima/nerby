@@ -3,7 +3,7 @@
 const { toolList, callTool } = require('../server/tools');
 
 const VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-const INFO = { name: 'nerby-protocol', title: 'Nerby Protocol', version: '0.2.0' };
+const INFO = { name: 'nerby-protocol', title: 'Nerby Protocol', version: '0.3.0' };
 const INSTRUCTIONS =
   'Nerby Protocol gives access to EVM networks (call list_networks first; Robinhood Chain is "robinhood"). ' +
   'No tool signs or sends anything. simulate_transaction dry-runs a transaction. ' +

@@ -65,6 +65,12 @@
           t.appendChild(N.tile('Owner', /^0x0{40}$/.test(o) ? 'Renounced' : addrLink(net, o, N.short(o)), /^0x0{40}$/.test(o) ? 'Ownership was given up' : 'This address has owner rights'));
         } else t.appendChild(N.tile('Owner', 'None', 'The contract has no owner() function'));
       }
+      var sfs = N.el('section', 'xsec'); sfs.appendChild(N.el('h3', '', 'Safety check'));
+      var sfb = N.el('div', 'sf'); sfb.appendChild(N.el('p', 'dstatus', 'Checking for admin powers…')); sfs.appendChild(sfb); $('xout').appendChild(sfs);
+      N.batch([['check_token_safety', { network: net.id, address: a }]]).then(function (q) {
+        if (mine !== seq) return;
+        if (q[0].ok && q[0].data.checks) N.safety(sfb, q[0].data); else sfb.textContent = 'The safety check could not run for this contract.';
+      });
       var s = section('Source code');
       if (r[9].ok && r[9].data.verified) {
         var v = r[9].data;
