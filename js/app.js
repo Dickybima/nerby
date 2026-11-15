@@ -14,8 +14,9 @@
 
   document.getElementById('yr').textContent = new Date().getFullYear();
 
-  // the MCP endpoint lives on the same host as the site
-  var endpoint = location.origin + '/mcp';
+  // the public MCP endpoint; on a local preview, point at the local server instead
+  var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  var endpoint = (local ? location.origin : 'https://nerbyprotocol.xyz') + '/mcp';
   [].forEach.call(document.querySelectorAll('.ep'), function (ep) {
     ep.setAttribute('data-copy', endpoint);
     ep.querySelector('code').textContent = endpoint;
