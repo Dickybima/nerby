@@ -17,7 +17,7 @@
   // the public MCP endpoint; on a local preview, point at the local server instead
   var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   var endpoint = (local ? location.origin : 'https://www.nerbyprotocol.xyz') + '/mcp';
-  [].forEach.call(document.querySelectorAll('.ep'), function (ep) {
+  [].forEach.call(document.querySelectorAll('.ep:not(.ca)'), function (ep) {
     ep.setAttribute('data-copy', endpoint);
     ep.querySelector('code').textContent = endpoint;
   });
