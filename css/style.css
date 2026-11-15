@@ -50,10 +50,37 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .menu{display:flex;align-items:center;gap:36px;font-family:var(--wide);font-stretch:112%;font-size:11px;font-weight:400;letter-spacing:.3em;text-transform:uppercase}
 .menu a{color:var(--ink2);transition:color .3s;position:relative}
 .menu a:hover{color:var(--acc)}
-.menu a:not(.cta)::after{content:"";position:absolute;left:0;right:.3em;bottom:-6px;height:1px;background:var(--hot);transform:scaleX(0);transform-origin:right;transition:transform .45s var(--ease)}
-.menu a:not(.cta):hover::after{transform:scaleX(1);transform-origin:left}
+.menu .mt::after{content:"";position:absolute;left:0;right:.3em;bottom:-6px;height:1px;background:var(--hot);transform:scaleX(0);transform-origin:right;transition:transform .45s var(--ease)}
+.menu .mi:hover .mt::after,.menu .mi:focus-within .mt::after{transform:scaleX(1);transform-origin:left}
 .menu .cta{display:flex;align-items:center;gap:10px;padding:13px 16px;color:var(--acc)}
 .menu .cta svg{width:12px;height:12px}
+
+/* dropdown panels */
+.mi{position:relative}
+.mi:hover .mt,.mi:focus-within .mt{color:var(--acc)}
+.mp{position:absolute;left:-22px;top:100%;padding-top:22px;visibility:hidden;opacity:0;transform:translateY(-4px);transition:opacity .25s,transform .35s var(--ease),visibility 0s .25s}
+.mi:hover .mp,.mi:focus-within .mp{visibility:visible;opacity:1;transform:none;transition-delay:0s}
+.mpi{position:relative;width:max-content;padding:12px 44px 12px 22px;text-transform:none;letter-spacing:0;
+  background:repeating-linear-gradient(135deg,rgba(228,255,214,.026) 0 1px,transparent 1px 7px),linear-gradient(180deg,rgba(14,22,16,.94),rgba(8,12,10,.92));
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(228,255,214,.08);border-left:0;box-shadow:0 18px 40px -18px rgba(0,0,0,.75)}
+.mpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:1px;background:linear-gradient(var(--hot),var(--glow))}
+.mpi p{font-family:var(--sans);font-size:12px;color:var(--mute);max-width:30ch;line-height:1.5;padding:6px 0 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.mpi a{display:flex;align-items:center;gap:14px;height:36px;white-space:nowrap}
+.mpi a{position:relative}
+.mpi a::before{content:"";position:absolute;left:-22px;top:50%;width:12px;height:1px;background:var(--line2);transition:background .3s,width .35s var(--ease)}
+.mpi a:hover::before{background:var(--hot);width:17px}
+.mpi a b{font-family:var(--wide);font-stretch:112%;font-weight:400;font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink);transition:color .3s}
+.mpi a:hover b{color:var(--hot)}
+.mpi a i{font-style:normal;font-family:var(--sans);font-size:12.5px;color:var(--mute)}
+.menu .mi:last-of-type .mp{left:auto;right:-22px}
+
+/* mobile menu */
+.mbtn{display:none;font-family:var(--wide);font-stretch:112%;font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--acc);padding:13px 16px}
+#mob{position:fixed;inset:0;z-index:19;overflow-y:auto;padding:96px var(--gut) 40px;background:var(--bg2);display:grid;gap:26px;align-content:start}
+#mob[hidden]{display:none}
+#mob section{display:grid;gap:4px}
+#mob h2{font-family:var(--wide);font-stretch:112%;font-weight:400;font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--hot);margin-bottom:6px}
+#mob a{font-size:20px;letter-spacing:-.02em;color:var(--ink);padding:7px 0;border-bottom:1px solid var(--line)}
 
 /* ---------- rail ---------- */
 .rail{position:fixed;z-index:6;right:var(--gut);top:50%;transform:translateY(-50%);display:grid;justify-items:end;gap:14px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;transition:opacity .5s}
@@ -124,7 +151,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
 /* ---------- responsive ---------- */
 @media (max-width:900px){
-  .cue,.rail,.menu a:not(.cta){display:none}
+  .cue,.rail,.menu .mi{display:none}
+  .mbtn{display:block}
+  .menu{gap:8px}
   .ch{top:auto;bottom:72px;transform:none}
   .ch0{bottom:110px}
   .vign{background:radial-gradient(ellipse at 50% 40%,transparent 35%,rgba(6,9,7,.8) 100%),linear-gradient(0deg,rgba(6,9,7,.95) 0%,rgba(6,9,7,0) 60%)}
@@ -132,7 +161,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 }
 @media (max-width:700px){.tg{display:none}}
 @media (max-width:560px){
-  .menu .cta span{display:none}
+  .menu .cta{display:none}
   .ch p:not(.n){font-size:14px}
   .btn{padding:15px 18px}
   .tf-c{grid-template-columns:repeat(2,minmax(0,1fr))}

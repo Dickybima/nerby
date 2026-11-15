@@ -1,0 +1,66 @@
+/* Nerby Protocol — content pages */
+body.page{overflow-x:hidden}
+.page .nav{background:linear-gradient(180deg,rgba(8,12,10,.92),rgba(8,12,10,0))}
+.page .grain{z-index:0}
+.pbg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 78% 0%,rgba(161,248,55,.13),transparent 70%),
+             radial-gradient(ellipse 40% 40% at 0% 100%,rgba(161,248,55,.05),transparent 70%)}
+.pm{position:relative;z-index:2;max-width:1160px;margin:0 auto;padding:clamp(130px,16vw,190px) var(--gut) clamp(70px,9vw,120px)}
+.pm .n{font-family:var(--wide);font-stretch:112%;font-size:11px;font-weight:400;text-transform:uppercase;letter-spacing:.32em;color:rgba(233,245,234,.55)}
+.pm .n em{font-style:normal;color:var(--hot)}
+.pm .lead{color:var(--ink2);font-size:17px;line-height:1.6;max-width:56ch}
+.ph{display:grid;gap:22px;margin-bottom:clamp(60px,8vw,110px)}
+.ph h1{font-weight:300;font-size:clamp(36px,5.2vw,72px);line-height:1.04;letter-spacing:-.04em}
+.ps{padding-top:clamp(48px,6vw,80px);margin-top:clamp(48px,6vw,80px);border-top:1px solid var(--line);scroll-margin-top:40px}
+.ps>header{display:grid;gap:14px;margin-bottom:34px}
+.ps h2{font-weight:300;font-size:clamp(26px,3vw,40px);line-height:1.1;letter-spacing:-.035em}
+.ps>.ep{margin-top:-6px}
+
+.cards{display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.cards.c1{grid-template-columns:minmax(0,1fr)}
+.cards.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cards.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{display:grid;gap:12px;align-content:start;padding:26px 24px;border:1px solid var(--line);min-width:0;
+  background:repeating-linear-gradient(135deg,rgba(228,255,214,.02) 0 1px,transparent 1px 7px),rgba(10,16,12,.6);transition:border-color .3s}
+.card:hover{border-color:var(--line2)}
+.card small{font-family:var(--wide);font-stretch:112%;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--mute)}
+.card h3{font-weight:400;font-size:19px;letter-spacing:-.02em;color:var(--ink)}
+.card p,.card li{overflow-wrap:anywhere;color:var(--ink2);font-size:14.5px;line-height:1.6}
+.card ol{padding-left:18px;display:grid;gap:6px}
+.card b{font-weight:500;color:var(--ink)}
+.card .fine{font-size:12.5px;color:var(--mute)}
+.live .card small{color:var(--hot)}
+.live .card small::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--hot);margin-right:8px;vertical-align:1px}
+.pm code{font-family:var(--mono);font-size:.9em;color:var(--acc)}
+
+/* code block */
+.cb{position:relative;border:1px solid var(--line2);background:rgba(6,9,7,.75);min-width:0}
+.cb pre{margin:0;padding:16px 78px 16px 16px;overflow-x:auto;font-size:12.5px;line-height:1.6}
+.cb code{font-size:inherit;white-space:pre-wrap;overflow-wrap:anywhere}
+.cbb{position:absolute;right:8px;top:8px;padding:8px 10px;font-family:var(--wide);font-stretch:112%;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--hot);background:rgba(8,12,10,.9)}
+.cbb:hover{color:var(--acc)}
+
+/* tools table */
+.tw{overflow-x:auto;border:1px solid var(--line)}
+.tb{width:100%;border-collapse:collapse;min-width:720px}
+.tb th{text-align:left;font-family:var(--wide);font-stretch:112%;font-weight:400;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--mute);padding:14px 18px;border-bottom:1px solid var(--line2)}
+.tb td{padding:15px 18px;border-bottom:1px solid var(--line);color:var(--ink2);font-size:14.5px;line-height:1.55;vertical-align:top}
+.tb tr:last-child td{border-bottom:0}
+.tb td:first-child{white-space:nowrap}
+.tb .q{color:var(--mute);font-style:italic}
+
+.pl{list-style:none;display:grid;gap:0;border:1px solid var(--line)}
+.pl li{padding:18px 22px;border-bottom:1px solid var(--line);color:var(--ink2);font-size:15px;line-height:1.6}
+.pl li:last-child{border-bottom:0}
+.pl b{font-weight:500;color:var(--ink)}
+
+.pn{margin-top:clamp(60px,8vw,100px);padding-top:40px;border-top:1px solid var(--line);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pn .n{width:100%}
+
+@media (max-width:900px){
+  .cards,.cards.c4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:620px){
+  .cards,.cards.c2,.cards.c4{grid-template-columns:minmax(0,1fr)}
+  .pm .lead{font-size:16px}
+}

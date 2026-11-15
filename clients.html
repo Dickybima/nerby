@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clients — Nerby Protocol</title>
+<meta name="description" content="Connect Claude, Claude Code, Cursor, VS Code, ChatGPT or any MCP client to Nerby Protocol in a minute.">
+<meta name="theme-color" content="#080c0a">
+<link rel="canonical" href="https://nerbyprotocol.xyz/clients.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nerby Protocol">
+<meta property="og:title" content="Clients — Nerby Protocol">
+<meta property="og:description" content="Connect Claude, Claude Code, Cursor, VS Code, ChatGPT or any MCP client to Nerby Protocol in a minute.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:site" content="@nerbyprotocol">
+<link rel="icon" type="image/svg+xml" href="img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&family=Mona+Sans:wdth,wght@100..125,400..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/page.css">
+</head>
+<body class="page">
+<div class="pbg" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="in">
+    <a class="mark" href="index.html" aria-label="Nerby Protocol home">
+      <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+      <b>NERBY PROTOCOL</b>
+    </a>
+    <nav class="menu" aria-label="Main">
+      <div class="mi"><a class="mt" href="product.html">Product</a><div class="mp"><div class="mpi"><p>What the gateway does and what your AI can ask it.</p><a href="product.html#how" style="--i:1"><b>How it works</b><i>From a question to live chain data</i></a><a href="product.html#tools" style="--i:2"><b>Tools</b><i>All eleven tools, with example prompts</i></a><a href="product.html#networks" style="--i:3"><b>Networks</b><i>Seven chains, one endpoint</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="clients.html">Clients</a><div class="mp"><div class="mpi"><p>Step-by-step setup for the AI apps you already use.</p><a href="clients.html#claude" style="--i:1"><b>Claude</b><i>Claude apps and Claude Code</i></a><a href="clients.html#editors" style="--i:2"><b>Cursor & VS Code</b><i>One small config file</i></a><a href="clients.html#others" style="--i:3"><b>ChatGPT & others</b><i>Any client that speaks MCP</i></a><a href="clients.html#prompts" style="--i:4"><b>First prompts</b><i>Things to try once connected</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="security.html">Security</a><div class="mp"><div class="mpi"><p>What Nerby Protocol can and cannot do with your assets.</p><a href="security.html#keys" style="--i:1"><b>No keys</b><i>Nothing here can sign or send</i></a><a href="security.html#simulation" style="--i:2"><b>Simulation</b><i>What a dry-run tells you</i></a><a href="security.html#data" style="--i:3"><b>Your data</b><i>What is stored: nothing</i></a><a href="security.html#limits" style="--i:4"><b>Known limits</b><i>Read this before relying on it</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="build.html">Build</a><div class="mp"><div class="mpi"><p>Where the project stands and how to call it from code.</p><a href="build.html#status" style="--i:1"><b>Status</b><i>What is live today</i></a><a href="build.html#roadmap" style="--i:2"><b>Roadmap</b><i>What comes next</i></a><a href="build.html#developers" style="--i:3"><b>For developers</b><i>Call the endpoint directly</i></a></div></div></div>
+      <a class="cta br" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener" aria-label="Nerby Protocol on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.2-8.3L1.8 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.3 4.7H5.5l11.2 14.5z" fill="currentColor"/></svg><span>nerbyprotocol</span></a>
+      <button type="button" class="mbtn br" id="mbtn" aria-expanded="false" aria-controls="mob">Menu</button>
+    </nav>
+  </div>
+</header>
+<div id="mob" hidden></div>
+
+<main class="pm">
+  <header class="ph">
+    <p class="n">Clients</p>
+    <h1>Connect once.<br>Use it everywhere.</h1>
+    <p class="lead">Setup takes about a minute in each app. Pick the client you use and follow its steps.</p>
+  </header>
+
+  <section class="ps" id="endpoint">
+    <header><p class="n"><em>00 · The endpoint</em></p><h2>One URL for every client.</h2><p class="lead">Everything below comes down to pasting this address into your AI app. There is no key to request and nothing to sign up for.</p></header>
+    <div class="ep" data-copy="https://nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
+  </section>
+  <section class="ps" id="claude">
+    <header><p class="n"><em>01 · Claude</em></p><h2>Claude apps and Claude Code.</h2></header>
+    <div class="cards c2"><article class="card br"><small>Claude on web and desktop</small><h3>Add a custom connector</h3><ol><li>Open <b>Settings → Connectors</b>.</li><li>Choose <b>Add custom connector</b>.</li><li>Name it <b>Nerby Protocol</b> and paste the endpoint URL.</li><li>Start a chat and enable the connector.</li></ol><p class="fine">Custom connectors depend on your Claude plan.</p></article><article class="card br"><small>Claude Code</small><h3>One command</h3><p>Run this in your terminal, then ask Claude Code a chain question.</p><div class="cb"><pre><code>claude mcp add --transport http nerby https://nerbyprotocol.xyz/mcp</code></pre><button type="button" class="cbb" data-copy="claude mcp add --transport http nerby https://nerbyprotocol.xyz/mcp">Copy</button></div></article></div>
+  </section>
+  <section class="ps" id="editors">
+    <header><p class="n"><em>02 · Editors</em></p><h2>Cursor and VS Code.</h2><p class="lead">Both read a small JSON file. Create it if it does not exist, then reload the editor.</p></header>
+    <div class="cards c2"><article class="card br"><small>Cursor · .cursor/mcp.json</small><h3>Cursor</h3><div class="cb"><pre><code>{
+  &quot;mcpServers&quot;: {
+    &quot;nerby&quot;: {
+      &quot;url&quot;: &quot;https://nerbyprotocol.xyz/mcp&quot;
+    }
+  }
+}</code></pre><button type="button" class="cbb" data-copy="{
+  &quot;mcpServers&quot;: {
+    &quot;nerby&quot;: {
+      &quot;url&quot;: &quot;https://nerbyprotocol.xyz/mcp&quot;
+    }
+  }
+}">Copy</button></div></article><article class="card br"><small>VS Code · .vscode/mcp.json</small><h3>VS Code</h3><div class="cb"><pre><code>{
+  &quot;servers&quot;: {
+    &quot;nerby&quot;: {
+      &quot;type&quot;: &quot;http&quot;,
+      &quot;url&quot;: &quot;https://nerbyprotocol.xyz/mcp&quot;
+    }
+  }
+}</code></pre><button type="button" class="cbb" data-copy="{
+  &quot;servers&quot;: {
+    &quot;nerby&quot;: {
+      &quot;type&quot;: &quot;http&quot;,
+      &quot;url&quot;: &quot;https://nerbyprotocol.xyz/mcp&quot;
+    }
+  }
+}">Copy</button></div></article></div>
+  </section>
+  <section class="ps" id="others">
+    <header><p class="n"><em>03 · ChatGPT and others</em></p><h2>Any client that speaks MCP.</h2></header>
+    <div class="cards c2"><article class="card br"><small>ChatGPT</small><h3>Custom connector</h3><p>In ChatGPT, turn on developer mode under <b>Settings → Connectors</b>, create a new connector and paste the endpoint URL. No authentication is needed.</p><p class="fine">Availability depends on your ChatGPT plan and workspace settings.</p></article><article class="card br"><small>Zed and local-only clients</small><h3>Bridge with mcp-remote</h3><p>Clients that only launch local servers can reach the endpoint through the <code>mcp-remote</code> bridge. Use this as the server command:</p><div class="cb"><pre><code>npx -y mcp-remote https://nerbyprotocol.xyz/mcp</code></pre><button type="button" class="cbb" data-copy="npx -y mcp-remote https://nerbyprotocol.xyz/mcp">Copy</button></div></article></div>
+  </section>
+  <section class="ps" id="prompts">
+    <header><p class="n"><em>04 · First prompts</em></p><h2>Things to try once connected.</h2></header>
+    <div class="cards c2"><article class="card br"><small>Read</small><h3>Check a wallet</h3><p>“What is the ETH and USDC balance of vitalik.eth’s address 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 on Ethereum?”</p></article><article class="card br"><small>Inspect</small><h3>Explain a transaction</h3><p>“Look up this transaction hash on Base and tell me what happened, who paid and how much the fee was.”</p></article><article class="card br"><small>Compare</small><h3>Gas across chains</h3><p>“Compare the current gas price on Ethereum, Base, Arbitrum and Robinhood Chain.”</p></article><article class="card br"><small>Preview</small><h3>Dry-run a transfer</h3><p>“Simulate sending 0.05 ETH from my address to this one on Optimism. Would it succeed, and what would it cost?”</p></article></div>
+  </section>
+  <aside class="pn">
+    <p class="n">Next</p>
+    <a class="btn s" href="security.html"><small>→</small><b>How it stays safe</b></a>
+    <a class="btn l br" href="index.html"><small>←</small><b>Back to home</b></a>
+  </aside>
+</main>
+
+<footer class="tf" id="footer">
+  <div class="tf-in">
+    <div class="tf-b">
+      <a class="mark" href="index.html">
+        <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+        <b>NERBY PROTOCOL</b>
+      </a>
+      <p>One endpoint between AI and every chain.</p>
+      <a class="tf-x" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener">@nerbyprotocol on X</a>
+      <a class="tf-x" href="https://x.com/leon_only1" target="_blank" rel="noopener">Founder · @leon_only1</a>
+      <a class="tf-x" href="https://x.com/Try_Wink" target="_blank" rel="noopener">Powered by @Try_Wink</a>
+      <a class="tf-x" href="mailto:hello@nerbyprotocol.xyz">hello@nerbyprotocol.xyz</a>
+      <div class="ep" data-copy="https://nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
+    </div>
+    <div class="tf-c"><div><span>Product</span><a href="product.html#how">How it works</a><a href="product.html#tools">Tools</a><a href="product.html#networks">Networks</a></div><div><span>Clients</span><a href="clients.html#claude">Claude</a><a href="clients.html#editors">Cursor & VS Code</a><a href="clients.html#others">ChatGPT & others</a><a href="clients.html#prompts">First prompts</a></div><div><span>Security</span><a href="security.html#keys">No keys</a><a href="security.html#simulation">Simulation</a><a href="security.html#data">Your data</a><a href="security.html#limits">Known limits</a></div><div><span>Build</span><a href="build.html#status">Status</a><a href="build.html#roadmap">Roadmap</a><a href="build.html#developers">For developers</a></div></div>
+  </div>
+  <div class="tf-l"><span>© <span id="yr">2026</span> Nerby Protocol</span><span>Nerby Protocol builds on-chain infrastructure for AI agents.</span></div>
+</footer>
+
+<script src="js/menu.js"></script>
+</body>
+</html>

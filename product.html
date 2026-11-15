@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Product — Nerby Protocol</title>
+<meta name="description" content="How Nerby Protocol works: eleven read-only tools that let any AI client query seven blockchains through one MCP endpoint.">
+<meta name="theme-color" content="#080c0a">
+<link rel="canonical" href="https://nerbyprotocol.xyz/product.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nerby Protocol">
+<meta property="og:title" content="Product — Nerby Protocol">
+<meta property="og:description" content="How Nerby Protocol works: eleven read-only tools that let any AI client query seven blockchains through one MCP endpoint.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:site" content="@nerbyprotocol">
+<link rel="icon" type="image/svg+xml" href="img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&family=Mona+Sans:wdth,wght@100..125,400..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/page.css">
+</head>
+<body class="page">
+<div class="pbg" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="in">
+    <a class="mark" href="index.html" aria-label="Nerby Protocol home">
+      <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+      <b>NERBY PROTOCOL</b>
+    </a>
+    <nav class="menu" aria-label="Main">
+      <div class="mi"><a class="mt" href="product.html">Product</a><div class="mp"><div class="mpi"><p>What the gateway does and what your AI can ask it.</p><a href="product.html#how" style="--i:1"><b>How it works</b><i>From a question to live chain data</i></a><a href="product.html#tools" style="--i:2"><b>Tools</b><i>All eleven tools, with example prompts</i></a><a href="product.html#networks" style="--i:3"><b>Networks</b><i>Seven chains, one endpoint</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="clients.html">Clients</a><div class="mp"><div class="mpi"><p>Step-by-step setup for the AI apps you already use.</p><a href="clients.html#claude" style="--i:1"><b>Claude</b><i>Claude apps and Claude Code</i></a><a href="clients.html#editors" style="--i:2"><b>Cursor & VS Code</b><i>One small config file</i></a><a href="clients.html#others" style="--i:3"><b>ChatGPT & others</b><i>Any client that speaks MCP</i></a><a href="clients.html#prompts" style="--i:4"><b>First prompts</b><i>Things to try once connected</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="security.html">Security</a><div class="mp"><div class="mpi"><p>What Nerby Protocol can and cannot do with your assets.</p><a href="security.html#keys" style="--i:1"><b>No keys</b><i>Nothing here can sign or send</i></a><a href="security.html#simulation" style="--i:2"><b>Simulation</b><i>What a dry-run tells you</i></a><a href="security.html#data" style="--i:3"><b>Your data</b><i>What is stored: nothing</i></a><a href="security.html#limits" style="--i:4"><b>Known limits</b><i>Read this before relying on it</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="build.html">Build</a><div class="mp"><div class="mpi"><p>Where the project stands and how to call it from code.</p><a href="build.html#status" style="--i:1"><b>Status</b><i>What is live today</i></a><a href="build.html#roadmap" style="--i:2"><b>Roadmap</b><i>What comes next</i></a><a href="build.html#developers" style="--i:3"><b>For developers</b><i>Call the endpoint directly</i></a></div></div></div>
+      <a class="cta br" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener" aria-label="Nerby Protocol on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.2-8.3L1.8 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.3 4.7H5.5l11.2 14.5z" fill="currentColor"/></svg><span>nerbyprotocol</span></a>
+      <button type="button" class="mbtn br" id="mbtn" aria-expanded="false" aria-controls="mob">Menu</button>
+    </nav>
+  </div>
+</header>
+<div id="mob" hidden></div>
+
+<main class="pm">
+  <header class="ph">
+    <p class="n">Product</p>
+    <h1>One gateway.<br>Every answer from the chain.</h1>
+    <p class="lead">Nerby Protocol turns plain-language questions from your AI into live blockchain queries, and hands the results straight back.</p>
+  </header>
+
+  <section class="ps" id="how">
+    <header><p class="n"><em>01 · How it works</em></p><h2>A question goes in. Chain data comes out.</h2><p class="lead">Nerby Protocol is a small server that speaks MCP, the open standard AI apps use to call tools. It sits between your AI and the blockchain nodes.</p></header>
+    <div class="cards c3"><article class="card br"><small>Step 1</small><h3>Connect</h3><p>Add one URL to your AI client as an MCP server. No account, no API key, nothing to install.</p></article><article class="card br"><small>Step 2</small><h3>Ask</h3><p>Ask in plain words. Your AI picks the right tool and Nerby Protocol queries a live node on the network you named.</p></article><article class="card br"><small>Step 3</small><h3>Decide</h3><p>The answer comes back as structured data your AI can explain. For transactions you get a dry-run and an unsigned transaction — the decision and the signature stay with you.</p></article></div>
+  </section>
+  <section class="ps" id="tools">
+    <header><p class="n"><em>02 · Tools</em></p><h2>Eleven tools, all read-only.</h2><p class="lead">Your AI chooses among these on its own. The example prompts show the kind of question each one answers.</p></header>
+    <div class="tw"><table class="tb"><thead><tr><th>Tool</th><th>What it does</th><th>Try asking</th></tr></thead><tbody><tr><td><code>list_networks</code></td><td>Lists the chains you can query, with chain IDs and native currency.</td><td class="q">“Which networks can you reach?”</td></tr><tr><td><code>get_balance</code></td><td>Native balance of any address: ETH, POL or BNB.</td><td class="q">“How much ETH is in 0xd8dA…6045?”</td></tr><tr><td><code>get_token_balance</code></td><td>ERC-20 balance of a holder, with the token symbol and decimals.</td><td class="q">“How much USDC does this wallet hold on Base?”</td></tr><tr><td><code>get_block</code></td><td>A block header: number, hash, time, gas used, base fee, transaction count.</td><td class="q">“What is the latest block on Arbitrum?”</td></tr><tr><td><code>get_transaction</code></td><td>A transaction and its receipt: sender, recipient, value, status, fee, logs.</td><td class="q">“Did this transaction succeed, and what did it cost?”</td></tr><tr><td><code>get_logs</code></td><td>Event logs from a contract over a block range, up to 2,000 blocks per call.</td><td class="q">“Show recent Transfer events from this token.”</td></tr><tr><td><code>get_code</code></td><td>Whether an address is a contract, and how large its bytecode is.</td><td class="q">“Is this address a contract or a wallet?”</td></tr><tr><td><code>read_storage</code></td><td>The raw 32-byte value of any storage slot.</td><td class="q">“What is in slot 0 of this contract?”</td></tr><tr><td><code>call_contract</code></td><td>Calls any read-only function from its Solidity signature and decodes the result.</td><td class="q">“Call totalSupply() on this token.”</td></tr><tr><td><code>get_gas_price</code></td><td>Current gas price and priority fee, in gwei.</td><td class="q">“What is gas on Ethereum right now?”</td></tr><tr><td><code>simulate_transaction</code></td><td>Dry-runs a transaction: success or revert reason, gas and fee estimate, and the unsigned transaction to review.</td><td class="q">“Would sending 0.1 ETH to this address go through?”</td></tr></tbody></table></div>
+  </section>
+  <section class="ps" id="networks">
+    <header><p class="n"><em>03 · Networks</em></p><h2>Seven chains, one endpoint.</h2><p class="lead">Every tool works the same way on every network. Name the chain in your question and your AI passes it along.</p></header>
+    <div class="cards c4"><article class="card br"><small>Chain ID 1</small><h3>Ethereum</h3><p><code>ethereum</code> · gas paid in ETH</p></article><article class="card br"><small>Chain ID 8453</small><h3>Base</h3><p><code>base</code> · gas paid in ETH</p></article><article class="card br"><small>Chain ID 42161</small><h3>Arbitrum One</h3><p><code>arbitrum</code> · gas paid in ETH</p></article><article class="card br"><small>Chain ID 10</small><h3>OP Mainnet</h3><p><code>optimism</code> · gas paid in ETH</p></article><article class="card br"><small>Chain ID 137</small><h3>Polygon</h3><p><code>polygon</code> · gas paid in POL</p></article><article class="card br"><small>Chain ID 56</small><h3>BNB Smart Chain</h3><p><code>bsc</code> · gas paid in BNB</p></article><article class="card br"><small>Chain ID 4663</small><h3>Robinhood Chain</h3><p><code>robinhood</code> · gas paid in ETH</p></article></div>
+  </section>
+  <aside class="pn">
+    <p class="n">Next</p>
+    <a class="btn s" href="clients.html"><small>→</small><b>Connect your AI</b></a>
+    <a class="btn l br" href="index.html"><small>←</small><b>Back to home</b></a>
+  </aside>
+</main>
+
+<footer class="tf" id="footer">
+  <div class="tf-in">
+    <div class="tf-b">
+      <a class="mark" href="index.html">
+        <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+        <b>NERBY PROTOCOL</b>
+      </a>
+      <p>One endpoint between AI and every chain.</p>
+      <a class="tf-x" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener">@nerbyprotocol on X</a>
+      <a class="tf-x" href="https://x.com/leon_only1" target="_blank" rel="noopener">Founder · @leon_only1</a>
+      <a class="tf-x" href="https://x.com/Try_Wink" target="_blank" rel="noopener">Powered by @Try_Wink</a>
+      <a class="tf-x" href="mailto:hello@nerbyprotocol.xyz">hello@nerbyprotocol.xyz</a>
+      <div class="ep" data-copy="https://nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
+    </div>
+    <div class="tf-c"><div><span>Product</span><a href="product.html#how">How it works</a><a href="product.html#tools">Tools</a><a href="product.html#networks">Networks</a></div><div><span>Clients</span><a href="clients.html#claude">Claude</a><a href="clients.html#editors">Cursor & VS Code</a><a href="clients.html#others">ChatGPT & others</a><a href="clients.html#prompts">First prompts</a></div><div><span>Security</span><a href="security.html#keys">No keys</a><a href="security.html#simulation">Simulation</a><a href="security.html#data">Your data</a><a href="security.html#limits">Known limits</a></div><div><span>Build</span><a href="build.html#status">Status</a><a href="build.html#roadmap">Roadmap</a><a href="build.html#developers">For developers</a></div></div>
+  </div>
+  <div class="tf-l"><span>© <span id="yr">2026</span> Nerby Protocol</span><span>Nerby Protocol builds on-chain infrastructure for AI agents.</span></div>
+</footer>
+
+<script src="js/menu.js"></script>
+</body>
+</html>

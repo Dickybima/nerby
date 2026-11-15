@@ -15,7 +15,7 @@ http.createServer((req, res) => {
   const rel = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname).replace(/^\/+/, '');
   const file = path.join(root, rel);
   const top = rel.split('/')[0];
-  if (!file.startsWith(root + path.sep) || !['index.html', 'css', 'js', 'img', 'brand'].includes(top)) { res.statusCode = 404; return res.end('Not found'); }
+  if (!file.startsWith(root + path.sep) || !(/^[a-z-]+\.html$/.test(rel) || ['css', 'js', 'img', 'brand'].includes(top))) { res.statusCode = 404; return res.end('Not found'); }
   fs.readFile(file, (err, data) => {
     if (err) { res.statusCode = 404; return res.end('Not found'); }
     res.setHeader('Content-Type', types[path.extname(file)] || 'application/octet-stream');
