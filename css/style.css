@@ -150,10 +150,18 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .tf-l{width:100%;max-width:1240px;margin:56px auto 0;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px 32px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;line-height:1.6;color:#84998a}
 
 /* ---------- responsive ---------- */
-@media (max-width:900px){
-  .cue,.rail,.menu .mi{display:none}
+/* the full menu needs room: tighten it on laptops, collapse it below that */
+@media (max-width:1440px){
+  .menu{gap:26px;letter-spacing:.24em}
+  .menu .cta span{display:none}
+}
+@media (max-width:1200px){
+  .menu .mi{display:none}
   .mbtn{display:block}
   .menu{gap:8px}
+}
+@media (max-width:900px){
+  .cue,.rail{display:none}
   .ch{top:auto;bottom:72px;transform:none}
   .ch0{bottom:110px}
   .vign{background:radial-gradient(ellipse at 50% 40%,transparent 35%,rgba(6,9,7,.8) 100%),linear-gradient(0deg,rgba(6,9,7,.95) 0%,rgba(6,9,7,0) 60%)}
