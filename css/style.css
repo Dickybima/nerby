@@ -178,3 +178,20 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .hs input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font-family:var(--mono);font-size:12.5px;padding:14px 14px}
 .hs input::placeholder{color:var(--mute)}
 .hs button{flex:none;padding:0 18px;font-family:var(--wide);font-stretch:112%;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--hot)}
+
+/* wallet picker */
+.wpick{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:16px;background:rgba(4,6,5,.72);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.wbox{width:min(420px,100%);max-height:calc(100vh - 32px);overflow-y:auto;border:1px solid var(--line2);background:linear-gradient(180deg,#0d150f,#080c0a);box-shadow:0 30px 80px -30px rgba(0,0,0,.8);padding:20px}
+.whead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.whead b{font-weight:400;font-size:19px;letter-spacing:-.02em;color:var(--ink)}
+.wx{font-size:24px;line-height:1;color:var(--mute);padding:0 6px}.wx:hover{color:var(--ink)}
+.wsub{font-family:var(--wide);font-stretch:112%;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--mute);margin:12px 0 8px}
+.wlist{display:grid;gap:8px}
+.witem{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:1px solid var(--line);background:rgba(14,22,16,.7);color:var(--ink);font-size:15px;text-align:left;transition:border-color .2s,background .2s}
+.witem:hover,.witem:focus-visible{border-color:var(--hot);background:rgba(200,255,107,.06);outline:0}
+.witem img{width:28px;height:28px;border-radius:6px;flex:none}
+.witem .wdot{width:28px;height:28px;border-radius:6px;flex:none;background:radial-gradient(circle at 30% 30%,var(--hot),#2b4032)}
+.witem span{flex:1}
+.witem small{font-family:var(--mono);font-size:11px;color:var(--mute)}
+.wstat{min-height:20px;margin-top:12px;font-size:13.5px;color:var(--ink2)}.wstat.err{color:#ff8a7a}
+.wfine{margin-top:10px;font-size:12px;color:var(--mute)}

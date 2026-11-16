@@ -92,16 +92,13 @@
     return tr;
   }
 
+  var W = window.NerbyWallet;
   function connect() {
-    if (!window.ethereum) { status('No wallet found. Open this page in a browser with a wallet such as MetaMask or Rabby, or in your wallet app’s browser.', 'err'); return Promise.resolve(null); }
-    return window.ethereum.request({ method: 'eth_requestAccounts' }).then(function (acc) {
-      setAccount(acc[0]);
-      return account;
-    }).catch(function (e) { status(e.code === 4001 ? 'Connection was declined in the wallet.' : 'Could not connect: ' + (e.message || e), 'err'); return null; });
+    return W.pick().then(function (a) { setAccount(a); return account; }, function () { status('No wallet chosen.', ''); return null; });
   }
   function setAccount(a) {
     account = a || null;
-    $('bconnect').textContent = account ? 'Connected · ' + short(account) : 'Connect wallet';
+    $('bconnect').textContent = account ? (W.name() || 'Wallet') + ' · ' + short(account) : 'Connect wallet';
     invalidate();
   }
 
@@ -140,9 +137,9 @@
 
   function ensureChain(n) {
     var hex = '0x' + n.chainId.toString(16);
-    return window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: hex }] }).catch(function (e) {
+    return W.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: hex }] }).catch(function (e) {
       if (e.code !== 4902 && !/unrecognized|not been added|unknown chain/i.test(e.message || '')) throw e;
-      return window.ethereum.request({
+      return W.request({
         method: 'wallet_addEthereumChain',
         params: [{ chainId: hex, chainName: n.name, nativeCurrency: { name: n.nativeCurrency, symbol: n.nativeCurrency, decimals: 18 }, rpcUrls: [n.publicRpc], blockExplorerUrls: [n.explorer] }]
       });
@@ -155,7 +152,7 @@
     $('bdeploy').disabled = true;
     status('Confirm the network and the transaction in your wallet…');
     ensureChain(p.net).then(function () {
-      return window.ethereum.request({ method: 'eth_sendTransaction', params: [{ from: p.d.from, data: tx.data, gas: tx.gas, value: '0x0' }] });
+      return W.request({ method: 'eth_sendTransaction', params: [{ from: p.d.from, data: tx.data, gas: tx.gas, value: '0x0' }] });
     }).then(function (hash) {
       prepared = null;
       status(line('Sent. Waiting for confirmation… ', link(p.net.explorer + '/tx/' + hash, short(hash))));
@@ -182,7 +179,8 @@
   $('dform').addEventListener('submit', function (e) { e.preventDefault(); review(); });
   $('bconnect').addEventListener('click', connect);
   $('bdeploy').addEventListener('click', deploy);
-  if (window.ethereum && window.ethereum.on) window.ethereum.on('accountsChanged', function (acc) { setAccount(acc[0]); });
+  W.onChange(function (a) { if ((a || null) !== account) setAccount(a); });
+  W.restore();
 
   mcp('list_networks', {}).then(function (list) {
     networks = list;

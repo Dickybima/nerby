@@ -78,17 +78,19 @@
   var amountIn = function (o, ri, ro) { return (ri * o * BPS + (ro - o) * BPS - 1n) / ((ro - o) * BPS) + 1n; };
 
   // ---------- wallet ----------
+  var W = window.NerbyWallet;
   function wallet() {
-    if (!window.ethereum) throw new Error('No wallet found. Open this page in a browser with MetaMask, Rabby or another wallet, or in your wallet app’s browser.');
-    return window.ethereum;
+    if (!W.provider()) throw new Error('No wallet connected. Type connect to choose one.');
+    return W;
   }
   function connect() {
-    return wallet().request({ method: 'eth_requestAccounts' }).then(function (a) { setAccount(a[0]); return account; });
+    return W.pick().then(function (a) { setAccount(a); return account; }, function () { throw new Error('No wallet chosen. Nothing was sent.'); });
   }
   function setAccount(a) {
     account = a ? a.toLowerCase() : null;
     $('twallet').textContent = account ? N.short(account) : 'Not connected';
-    $('tconnect').textContent = account ? 'Connected' : 'Connect wallet';
+    $('tconnect').textContent = account ? (W.name() || 'Wallet') + ' · ' + N.short(account) : 'Connect wallet';
+    if (!account) { $('teth').textContent = '— ETH'; $('tnerby').textContent = '— NERBY'; }
     $('tconnect').classList.toggle('on', !!account);
     if (account) refreshBar();
   }
@@ -103,7 +105,7 @@
       return w.request({ method: 'wallet_addEthereumChain', params: [{ chainId: id, chainName: 'Robinhood Chain', nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }, rpcUrls: ['https://rpc.mainnet.chain.robinhood.com'], blockExplorerUrls: [EXPLORER] }] });
     });
   }
-  function needWallet() { return account ? Promise.resolve(account) : (line('Connecting wallet…', 'mute'), connect()); }
+  function needWallet() { return account && W.provider() ? Promise.resolve(account) : (line('Choose a wallet to continue…', 'mute'), connect()); }
   function send(tx, label) {
     line(label + ' — confirm in your wallet…', 'mute');
     return ensureChain().then(function () {
@@ -150,7 +152,8 @@
     ['price', 'Price, fees and curve status'],
     ['balance [0x…]', 'Your balances, or any address'],
     ['slippage 2', 'Set slippage tolerance in % (now ' + slippage + '%)'],
-    ['connect · clear · help', '']
+    ['connect · wallet · disconnect', 'Choose, show or disconnect your wallet'],
+    ['clear · help', '']
   ];
   function help() {
     var c = N.el('div', 'tcard');
@@ -169,7 +172,9 @@
     var c = t[0];
     if (c === 'help' || c === '?') return Promise.resolve(help());
     if (c === 'clear') { out.textContent = ''; return Promise.resolve(); }
-    if (c === 'connect') return connect().then(function () { line('Connected ' + account, 'ok'); return cmdBalance([]); });
+    if (c === 'connect') return connect().then(function () { line('Connected ' + (W.name() || 'wallet') + ' · ' + account, 'ok'); return cmdBalance([]); });
+    if (c === 'disconnect') { W.disconnect(); setAccount(null); line('Disconnected. Type connect to choose a wallet.', 'mute'); return Promise.resolve(); }
+    if (c === 'wallet') return Promise.resolve(walletCard());
     if (c === 'slippage') { var v = Number(t[1]); if (!(v > 0 && v <= 50)) throw new Error('Use a number between 0.1 and 50, for example: slippage 2'); slippage = v; line('Slippage set to ' + v + '%.', 'ok'); return Promise.resolve(); }
     if (c === 'price') return cmdPrice();
     if (c === 'balance' || c === 'bal') return cmdBalance(t.slice(1));
@@ -309,6 +314,14 @@
     });
   }
 
+  function walletCard() {
+    if (!account) { line('No wallet connected. Type connect to choose one.', 'mute'); return; }
+    card([['Wallet', W.name() || 'Browser wallet'], ['Address', N.link('explore.html#robinhood/' + account, account)]], 'Connected');
+    var row = N.el('span', 'task'), sw = N.el('button', 'tbtn', 'Switch wallet'), dc = N.el('button', 'tbtn', 'Disconnect');
+    sw.addEventListener('click', function () { exec('connect'); }); dc.addEventListener('click', function () { exec('disconnect'); });
+    row.appendChild(sw); row.appendChild(dc); line(row, 'raw');
+  }
+
   function ask() {
     var row = N.el('span', 'task');
     var y = N.el('button', 'tbtn yes', 'Confirm'), n = N.el('button', 'tbtn', 'Cancel');
@@ -352,10 +365,10 @@
     if (e.key === 'ArrowDown') { e.preventDefault(); hpos = Math.min(history.length, hpos + 1); $('tin').value = history[hpos] || ''; }
   });
   [].forEach.call(document.querySelectorAll('[data-cmd]'), function (b) { b.addEventListener('click', function () { var c = b.getAttribute('data-cmd'); if (/0x…|<|\.\.\./.test(c)) { $('tin').value = c.replace('0x…', ''); $('tin').focus(); } else exec(c); }); });
-  $('tconnect').addEventListener('click', function () { if (!account) exec('connect'); });
+  $('tconnect').addEventListener('click', function () { exec(account ? 'wallet' : 'connect'); });
   $('tout').addEventListener('click', function (e) { if (!e.target.closest('a,button,code')) $('tin').focus(); });
-  if (window.ethereum && window.ethereum.on) window.ethereum.on('accountsChanged', function (a) { setAccount(a[0]); });
-  if (window.ethereum) window.ethereum.request({ method: 'eth_accounts' }).then(function (a) { if (a[0]) setAccount(a[0]); }).catch(function () {});
+  W.onChange(function (a) { if ((a || null) !== account) setAccount(a); });
+  W.restore();
 
   line('Nerby Terminal · $NERBY on Robinhood Chain', 'head');
   line('Type a command like  buy 0.01 eth  or  sell 50% nerby, then confirm in your wallet. Type help for everything.', 'mute');
