@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const mcp = require('../api/mcp');
+const marketApi = require('../api/market');
 
 const root = path.join(__dirname, '..');
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png' };
@@ -12,6 +13,7 @@ const port = Number(process.env.PORT) || 3000;
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
   if (url.pathname === '/mcp' || url.pathname === '/api/mcp') return mcp(req, res);
+  if (url.pathname === '/api/market') return marketApi(req, res);
   const rel = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname).replace(/^\/+/, '');
   const file = path.join(root, rel);
   const top = rel.split('/')[0];

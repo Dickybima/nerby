@@ -2,6 +2,7 @@
 /* Nerby Protocol — chain tools exposed over MCP. Read-only: nothing here holds or uses a private key. */
 const { encodeFunctionData, decodeFunctionResult, encodeDeployData, getContractAddress, parseAbiItem, formatUnits, isAddress, toFunctionSelector } = require('viem');
 const { compile, erc20Source, encodeRecipe, CompileError } = require('./compiler');
+const { market, MarketError } = require('./market');
 
 // Public RPC endpoints. Override any of them with an env var, e.g. RPC_ETHEREUM=https://…
 const NETWORKS = {
@@ -391,6 +392,18 @@ const TOOLS = [
         functions: v.abi.filter((i) => i.type === 'function').map(abiSig),
         events: v.abi.filter((i) => i.type === 'event').map(abiSig)
       });
+    }
+  },
+  {
+    name: 'get_token_market',
+    description: 'Market data for a token from its DEX pools (via GeckoTerminal): price in USD, fully diluted value, liquidity, 24h volume, price change and buy/sell counts per pool. Returns listed: false when no pool is found.',
+    inputSchema: { type: 'object', properties: { network: netProp, token: addrProp('Token contract') }, required: ['network', 'token'] },
+    run: async (a) => {
+      net(a.network);
+      try { return await market(a.network, address(a.token, 'token'), false); } catch (e) {
+        if (e instanceof MarketError) throw new ToolError(e.message);
+        throw e;
+      }
     }
   },
   {
