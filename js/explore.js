@@ -79,7 +79,15 @@
         var fn = N.el('div', 'tile wide'); fn.appendChild(N.el('span', '', 'Functions (' + v.functions.length + ')'));
         var pre = N.el('pre', 'fns', v.functions.join('\n')); fn.appendChild(pre); s.appendChild(fn);
       } else {
-        s.appendChild(N.tile('Verified', 'No', 'No verified source on Sourcify or Blockscout, so the code cannot be read', 'warn'));
+        var vt = N.tile('Verified', 'No', 'No verified source on Sourcify or Blockscout, so the code cannot be read', 'warn');
+        s.appendChild(vt);
+        N.blockscoutVerified(r[9].ok ? r[9].data.blockscout : null, a).then(function (j) {
+          if (!j || mine !== seq) return;
+          var nt = N.tile('Verified', 'Yes · Blockscout', (j.name || '') + (j.compiler_version ? ' · solc ' + j.compiler_version.replace(/^v/, '').split('+')[0] : ''), 'ok');
+          s.replaceChild(nt, vt);
+          var fns = (j.abi || []).filter(function (x) { return x.type === 'function'; }).map(function (x) { return x.name + '(' + (x.inputs || []).map(function (i) { return i.type; }).join(',') + ')'; });
+          if (fns.length) { var fn = N.el('div', 'tile wide'); fn.appendChild(N.el('span', '', 'Functions (' + fns.length + ')')); fn.appendChild(N.el('pre', 'fns', fns.join('\n'))); s.appendChild(fn); }
+        });
       }
     }).catch(function () { if (mine === seq) say('Could not reach the Nerby Protocol server. Try again.', 'err'); });
   }

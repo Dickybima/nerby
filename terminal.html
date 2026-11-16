@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Terminal — Nerby Protocol</title>
+<meta name="description" content="Buy, sell, send and burn $NERBY on Robinhood Chain by typing a command. Every trade is previewed, dry-run and signed in your own wallet.">
+<meta name="theme-color" content="#080c0a">
+<link rel="canonical" href="https://www.nerbyprotocol.xyz/terminal.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nerby Protocol">
+<meta property="og:title" content="Terminal — Nerby Protocol">
+<meta property="og:description" content="Buy, sell, send and burn $NERBY on Robinhood Chain by typing a command. Every trade is previewed, dry-run and signed in your own wallet.">
+<meta property="og:image" content="https://www.nerbyprotocol.xyz/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://www.nerbyprotocol.xyz/img/og.png">
+<meta name="twitter:site" content="@nerbyprotocol">
+<link rel="icon" type="image/svg+xml" href="img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&family=Mona+Sans:wdth,wght@100..125,400..600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/page.css">
+</head>
+<body class="page">
+<div class="pbg" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="in">
+    <a class="mark" href="index.html" aria-label="Nerby Protocol home">
+      <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+      <b>NERBY PROTOCOL</b>
+    </a>
+    <nav class="menu" aria-label="Main">
+      <div class="mi"><a class="mt" href="token.html">$NERBY</a><div class="mp"><div class="mpi"><p>The Nerby Protocol token on Robinhood Chain, with every number read live.</p><a href="token.html#market" style="--i:1"><b>Price & market cap</b><i>Price, chart, liquidity and volume</i></a><a href="token.html#burn" style="--i:2"><b>Buyback & burn</b><i>Every buyback and burn, on-chain</i></a><a href="token.html#supply" style="--i:3"><b>Supply & holders</b><i>Who holds what, pool and burn labelled</i></a><a href="token.html#safety" style="--i:4"><b>Safety & contract</b><i>Admin powers and the official address</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="terminal.html">Terminal</a><div class="mp"><div class="mpi"><p>Buy, sell, send and burn $NERBY by typing a command. You sign in your own wallet.</p><a href="terminal.html" style="--i:1"><b>Open the terminal</b><i>buy 0.01 eth · sell 50% nerby</i></a><a href="terminal.html#how" style="--i:2"><b>Commands</b><i>Everything you can type</i></a><a href="terminal.html#safety" style="--i:3"><b>How trades work</b><i>Fees, slippage and signing</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="explore.html">Explore</a><div class="mp"><div class="mpi"><p>Look things up live from the chain, right here in the browser.</p><a href="explore.html" style="--i:1"><b>Scan an address</b><i>Wallets, tokens and contracts</i></a><a href="explore.html#tx" style="--i:2"><b>Inspect a transaction</b><i>Status, fee and token transfers</i></a><a href="status.html" style="--i:3"><b>Network status</b><i>Is every chain answering right now?</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="product.html">Product</a><div class="mp"><div class="mpi"><p>What the gateway does and what your AI can ask it.</p><a href="product.html#how" style="--i:1"><b>How it works</b><i>From a question to live chain data</i></a><a href="product.html#tools" style="--i:2"><b>Tools</b><i>All sixteen tools, with example prompts</i></a><a href="product.html#networks" style="--i:3"><b>Networks</b><i>Eleven chains, one endpoint</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="clients.html">Clients</a><div class="mp"><div class="mpi"><p>Step-by-step setup for the AI apps you already use.</p><a href="clients.html#claude" style="--i:1"><b>Claude</b><i>Claude apps and Claude Code</i></a><a href="clients.html#editors" style="--i:2"><b>Cursor & VS Code</b><i>One small config file</i></a><a href="clients.html#others" style="--i:3"><b>ChatGPT & others</b><i>Any client that speaks MCP</i></a><a href="clients.html#prompts" style="--i:4"><b>First prompts</b><i>Things to try once connected</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="security.html">Security</a><div class="mp"><div class="mpi"><p>What Nerby Protocol can and cannot do with your assets.</p><a href="security.html#keys" style="--i:1"><b>No keys</b><i>The server cannot sign or send</i></a><a href="security.html#simulation" style="--i:2"><b>Simulation</b><i>What a dry-run tells you</i></a><a href="security.html#data" style="--i:3"><b>Your data</b><i>What is stored: nothing</i></a><a href="security.html#limits" style="--i:4"><b>Known limits</b><i>Read this before relying on it</i></a></div></div></div>
+      <div class="mi"><a class="mt" href="build.html">Build</a><div class="mp"><div class="mpi"><p>Deploy a contract, see what is live, and call the gateway from code.</p><a href="deploy.html" style="--i:1"><b>Deploy a contract</b><i>A token or your own Solidity</i></a><a href="build.html#status" style="--i:2"><b>Status</b><i>What is live today</i></a><a href="build.html#roadmap" style="--i:3"><b>Roadmap</b><i>What comes next</i></a><a href="build.html#developers" style="--i:4"><b>For developers</b><i>Call the endpoint directly</i></a></div></div></div>
+      <a class="cta br" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener" aria-label="Nerby Protocol on X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.2-8.3L1.8 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.3 4.7H5.5l11.2 14.5z" fill="currentColor"/></svg><span>nerbyprotocol</span></a>
+      <button type="button" class="mbtn br" id="mbtn" aria-expanded="false" aria-controls="mob">Menu</button>
+    </nav>
+  </div>
+</header>
+<div id="mob" hidden></div>
+
+<main class="pm">
+  <header class="ph">
+    <p class="n">Terminal · $NERBY</p>
+    <h1>Type it.<br>Sign it. Done.</h1>
+    <p class="lead">Buy, sell, send and burn $NERBY with plain commands. You see a preview first, and your own wallet signs every transaction.</p>
+  </header>
+
+  <section class="ps" id="term">
+    <div class="term">
+      <div class="tbar">
+        <span class="tdots"><i></i><i></i><i></i></span>
+        <span class="tinfo"><b>$NERBY</b> · Robinhood Chain</span>
+        <span class="tbal"><span id="teth">— ETH</span><span id="tnerby">— NERBY</span><span id="twallet">Not connected</span></span>
+        <button type="button" class="tconn" id="tconnect">Connect wallet</button>
+      </div>
+      <div class="tout" id="tout" role="log" aria-live="polite"></div>
+      <form class="tform" id="tform" autocomplete="off">
+        <label for="tin">nerby&gt;</label>
+        <input type="text" id="tin" spellcheck="false" autocapitalize="off" placeholder="buy 0.01 eth" aria-label="Command">
+        <button type="submit" class="tgo">Run</button>
+      </form>
+    </div>
+    <div class="xtry"><span>Try</span>
+      <button type="button" data-cmd="help">help</button>
+      <button type="button" data-cmd="price">price</button>
+      <button type="button" data-cmd="balance">balance</button>
+      <button type="button" data-cmd="buy 0.01 eth">buy 0.01 eth</button>
+      <button type="button" data-cmd="buy 1m nerby">buy 1m nerby</button>
+      <button type="button" data-cmd="sell 50% nerby">sell 50% nerby</button>
+      <button type="button" data-cmd="send 1000 nerby to 0x…">send 1000 nerby to …</button>
+      <button type="button" data-cmd="burn 10k nerby">burn 10k nerby</button>
+    </div>
+  </section>
+  <section class="ps" id="how">
+    <header><p class="n"><em>Commands</em></p><h2>Type it like you would say it.</h2><p class="lead">Amounts accept 0.01, 250k, 1.5m, 1,000,000, 50% and all.</p></header>
+    <div class="tw"><table class="tb"><thead><tr><th>Command</th><th>What happens</th></tr></thead><tbody><tr><td><code>buy 0.01 eth</code></td><td>Buys $NERBY with 0.01 ETH on the Pons V2 curve</td></tr><tr><td><code>buy 1m nerby</code></td><td>Buys 1,000,000 $NERBY and pays the ETH that costs</td></tr><tr><td><code>sell 500k nerby</code> · <code>sell 50% nerby</code> · <code>sell all nerby</code></td><td>Sells $NERBY for ETH. The first sell asks you to approve that exact amount.</td></tr><tr><td><code>send 1000 nerby to 0x…</code></td><td>Sends $NERBY to another wallet</td></tr><tr><td><code>send 0.01 eth to 0x…</code></td><td>Sends ETH to another wallet</td></tr><tr><td><code>burn 10k nerby</code></td><td>Sends $NERBY to the burn address, where it can never move again</td></tr><tr><td><code>price</code> · <code>balance</code> · <code>balance 0x…</code></td><td>Price, fees and curve status; your balances or any address</td></tr><tr><td><code>slippage 2</code></td><td>Sets how far the price may move before a trade is cancelled (default 2%)</td></tr></tbody></table></div>
+  </section>
+  <section class="ps" id="safety">
+    <header><p class="n"><em>How trades work</em></p><h2>You see it first. You sign it.</h2></header>
+    <div class="cards c3"><article class="card br"><small>1 · Preview</small><h3>Every command shows a preview</h3><p>What you pay, what you get, the minimum you accept, price impact and fees. Nothing is sent until you confirm.</p></article><article class="card br"><small>2 · Dry-run</small><h3>Checked against the chain</h3><p>Before your wallet opens, the exact transaction is simulated on Robinhood Chain. If it would fail, it is stopped and nothing is sent.</p></article><article class="card br"><small>3 · Your wallet</small><h3>Signed by you</h3><p>Your browser wallet shows the transaction and you approve it there. Nerby Protocol never sees your keys and adds no fee.</p></article></div><ul class="pl" style="margin-top:18px"><li><b>Where trades go.</b> Buys and sells go straight to the $NERBY bonding curve on Pons V2 (<a href="https://robinhoodchain.blockscout.com/address/0xc6724F498424A7Df496F594Ddea382EBC1c5906c" target="_blank" rel="noopener">0xc672…906c</a>). The curve charges 1% protocol fee plus 1.8% creator tax on every trade; Nerby Protocol charges nothing.</li><li><b>Slippage protects you.</b> Each trade carries a minimum amount. If the price moves more than your slippage before it lands, the curve cancels it.</li><li><b>Sending is final.</b> Transfers and burns cannot be reversed. Check the address before you confirm.</li><li><b>After graduation.</b> When the curve sells out, $NERBY moves to a Uniswap V4 pool and the terminal will stop trading on the curve.</li><li><b>Not financial advice.</b> Trading carries risk; only use what you can afford to lose.</li></ul>
+  </section>
+  <aside class="pn">
+    <p class="n">Next</p>
+    <a class="btn s" href="token.html"><small>→</small><b>See the $NERBY page</b></a>
+    <a class="btn l br" href="index.html"><small>←</small><b>Back to home</b></a>
+  </aside>
+</main>
+
+<footer class="tf" id="footer">
+  <div class="tf-in">
+    <div class="tf-b">
+      <a class="mark" href="index.html">
+        <img class="logo" src="img/logo.svg" alt="" width="26" height="26">
+        <b>NERBY PROTOCOL</b>
+      </a>
+      <p>One endpoint between AI and every chain.</p>
+      <a class="tf-x" href="https://x.com/nerbyprotocol" target="_blank" rel="noopener">@nerbyprotocol on X</a>
+      <a class="tf-x" href="mailto:hello@nerbyprotocol.xyz">hello@nerbyprotocol.xyz</a>
+      <div class="ep" data-copy="https://www.nerbyprotocol.xyz/mcp"><span class="ep-l">Endpoint · MCP</span><button type="button" class="ep-b" aria-label="Copy endpoint URL"><code>https://www.nerbyprotocol.xyz/mcp</code><i>Copy</i></button></div>
+      <div class="ep ca" data-copy="0xd17d0eabf76f2b3144da726efd341761f4697113"><span class="ep-l">$NERBY · CA · Robinhood Chain</span><button type="button" class="ep-b" aria-label="Copy $NERBY contract address"><code>0xd17d0eabf76f2b3144da726efd341761f4697113</code><i>Copy</i></button></div>
+      <a class="tf-x" href="https://robinhoodchain.blockscout.com/token/0xd17d0eabf76f2b3144da726efd341761f4697113" target="_blank" rel="noopener">View $NERBY on the explorer</a>
+    </div>
+    <div class="tf-c"><div><span>$NERBY</span><a href="token.html#market">Price & market cap</a><a href="token.html#burn">Buyback & burn</a><a href="token.html#supply">Supply & holders</a><a href="token.html#safety">Safety & contract</a></div><div><span>Terminal</span><a href="terminal.html">Open the terminal</a><a href="terminal.html#how">Commands</a><a href="terminal.html#safety">How trades work</a></div><div><span>Explore</span><a href="explore.html">Scan an address</a><a href="explore.html#tx">Inspect a transaction</a><a href="status.html">Network status</a></div><div><span>Product</span><a href="product.html#how">How it works</a><a href="product.html#tools">Tools</a><a href="product.html#networks">Networks</a></div><div><span>Clients</span><a href="clients.html#claude">Claude</a><a href="clients.html#editors">Cursor & VS Code</a><a href="clients.html#others">ChatGPT & others</a><a href="clients.html#prompts">First prompts</a></div><div><span>Security</span><a href="security.html#keys">No keys</a><a href="security.html#simulation">Simulation</a><a href="security.html#data">Your data</a><a href="security.html#limits">Known limits</a></div><div><span>Build</span><a href="deploy.html">Deploy a contract</a><a href="build.html#status">Status</a><a href="build.html#roadmap">Roadmap</a><a href="build.html#developers">For developers</a></div></div>
+  </div>
+  <div class="tf-l"><span>© <span id="yr">2026</span> Nerby Protocol</span><span>Nerby Protocol builds on-chain infrastructure for AI agents.</span></div>
+</footer>
+
+<script src="js/menu.js"></script>
+<script src="js/nerby.js"></script>
+<script src="js/terminal.js"></script>
+</body>
+</html>

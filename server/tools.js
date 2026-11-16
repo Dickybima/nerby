@@ -28,7 +28,7 @@ function net(id) {
   return n;
 }
 
-async function rpc(network, method, params) {
+async function rpc(network, method, params, attempt) {
   const n = net(network);
   const url = process.env['RPC_' + network.toUpperCase()] || n.rpc;
   let res;
@@ -41,6 +41,11 @@ async function rpc(network, method, params) {
     });
   } catch (e) {
     throw new ToolError(`Could not reach the ${n.name} RPC (${e.name === 'TimeoutError' ? 'timed out' : e.message}).`);
+  }
+  // public RPCs rate-limit bursts: wait a moment and try again before giving up
+  if (res.status === 429 && (attempt || 0) < 3) {
+    await new Promise((ok) => setTimeout(ok, 400 * ((attempt || 0) + 1) + Math.random() * 300));
+    return rpc(network, method, params, (attempt || 0) + 1);
   }
   if (!res.ok) throw new ToolError(`${n.name} RPC answered HTTP ${res.status}.`);
   const body = await res.json();
@@ -371,7 +376,7 @@ const TOOLS = [
       const addr = address(a.address, 'address'), n = net(a.network);
       const v = await verifiedSource(a.network, addr);
       const explorer = `${n.explorer}/address/${addr}`;
-      if (!v) return { address: addr, network: a.network, verified: false, note: 'No verified source was found on Sourcify' + (n.blockscout ? ' or Blockscout' : '') + '. The contract may be unverified, or verified only on another explorer.', explorer };
+      if (!v) return { address: addr, network: a.network, verified: false, blockscout: n.blockscout || null, note: 'No verified source was found on Sourcify' + (n.blockscout ? ' or Blockscout' : '') + '. The contract may be unverified, or verified only on another explorer.', explorer };
       const head = { address: addr, network: a.network, verified: true, via: v.via, match: v.match, name: v.name, compiler: v.compiler, explorer };
       if (v.implementations) { head.proxyImplementations = v.implementations; head.note = 'This is a proxy. Look up an implementation address to see the logic.'; }
       const part = a.part || 'overview';
@@ -435,7 +440,7 @@ const TOOLS = [
       if (impl) checks.push({ level: 'warn', title: 'Proxy contract', detail: `The logic lives at ${impl} and can be swapped by whoever controls the proxy.` });
       if (!powers.length && !impl) checks.push({ level: 'ok', title: 'No common admin functions', detail: 'None of the usual mint, pause, blacklist, fee, limit or upgrade functions were found in the bytecode.' });
       checks.push(source ? { level: 'ok', title: 'Source verified', detail: `Verified on ${source.via}${source.name ? ' as ' + source.name : ''}.` } : { level: 'warn', title: 'Source not verified', detail: 'The code cannot be read on Sourcify or Blockscout, so these checks rely on the bytecode alone.' });
-      const out = { address: addr, network: a.network, explorer: `${n.explorer}/address/${addr}`, isContract: true, checks };
+      const out = { address: addr, network: a.network, explorer: `${n.explorer}/address/${addr}`, blockscout: n.blockscout || null, isContract: true, checks };
       if (supply !== undefined) {
         const burned = (dead || 0n) + (zero || 0n), dec = Number(decimals === undefined ? 18 : decimals);
         Object.assign(out, { token: { name, symbol, decimals: dec, totalSupply: formatUnits(supply, dec), burned: formatUnits(burned, dec), burnedPercent: supply ? Number(burned * 100000n / supply) / 1000 : 0 } });

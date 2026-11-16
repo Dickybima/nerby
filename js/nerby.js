@@ -67,8 +67,38 @@ window.Nerby = (function () {
     return Math.floor(s / 86400) + 'd ago';
   }
 
+  // like batch, but asks again for calls that failed (public RPCs rate-limit bursts)
+  function batchRetry(calls, tries) {
+    tries = tries === undefined ? 2 : tries;
+    return batch(calls).then(function (res) {
+      var bad = []; res.forEach(function (r, i) { if (!r || !r.ok) bad.push(i); });
+      if (!bad.length || !tries) return res;
+      return new Promise(function (ok) { setTimeout(ok, 700); }).then(function () {
+        return batchRetry(bad.map(function (i) { return calls[i]; }), tries - 1);
+      }).then(function (again) { bad.forEach(function (i, k) { if (again[k] && again[k].ok) res[i] = again[k]; }); return res; });
+    });
+  }
+
   // renders the result of the check_token_safety tool into a container
+  // Blockscout sits behind a bot check that blocks our server but not browsers,
+  // so a "not verified" answer is double-checked from the visitor's browser.
+  function blockscoutVerified(base, address) {
+    if (!base) return Promise.resolve(null);
+    return fetch(base + '/api/v2/smart-contracts/' + address).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { return j && j.is_verified ? j : null; }).catch(function () { return null; });
+  }
+
   function safety(box, d) {
+    var i = d.checks.findIndex(function (c) { return c.title === 'Source not verified'; });
+    if (i >= 0 && d.blockscout && !d.__rechecked) {
+      d.__rechecked = true;
+      blockscoutVerified(d.blockscout, d.address).then(function (j) {
+        if (!j) return;
+        d.checks[i] = { level: 'ok', title: 'Source verified', detail: 'Verified on Blockscout' + (j.name ? ' as ' + j.name : '') + '.' };
+        d.summary = d.checks.some(function (c) { return c.level === 'warn'; }) ? 'Some powers or unknowns need a closer look.' : 'No red flags found in this quick check.';
+        safety(box, d);
+      });
+    }
     box.textContent = '';
     var head = el('div', 'sfhead ' + (d.checks.some(function (c) { return c.level === 'warn'; }) ? 'warn' : 'ok'));
     head.appendChild(el('b', '', d.summary));
@@ -82,5 +112,5 @@ window.Nerby = (function () {
     });
   }
 
-  return { safety: safety, DEAD: DEAD, ZERO: ZERO, batch: batch, units: units, trimNum: trimNum, percent: percent, short: short, el: el, link: link, tile: tile, ago: ago };
+  return { blockscoutVerified: blockscoutVerified, batchRetry: batchRetry, safety: safety, DEAD: DEAD, ZERO: ZERO, batch: batch, units: units, trimNum: trimNum, percent: percent, short: short, el: el, link: link, tile: tile, ago: ago };
 })();
