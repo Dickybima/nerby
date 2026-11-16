@@ -11,11 +11,11 @@
 <meta property="og:site_name" content="Nerby Protocol">
 <meta property="og:title" content="$NERBY — Nerby Protocol">
 <meta property="og:description" content="Everything about $NERBY on Robinhood Chain: live price, market cap, liquidity, volume, buybacks, burns, supply, holders and contract safety.">
-<meta property="og:image" content="https://www.nerbyprotocol.xyz/img/og.png">
+<meta property="og:image" content="https://www.nerbyprotocol.xyz/api/og">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://www.nerbyprotocol.xyz/img/og.png">
+<meta name="twitter:image" content="https://www.nerbyprotocol.xyz/api/og">
 <meta name="twitter:site" content="@nerbyprotocol">
 <link rel="icon" type="image/svg+xml" href="img/logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,6 +74,19 @@
       <div class="tile"><span>Circulating</span><b id="kcirc">…</b><small>Total supply minus burned</small></div>
     </div>
     <p class="dstatus" id="mnote"></p>
+  </section>
+  <section class="ps" id="share">
+    <header><p class="n"><em>Share</em></p><h2>Share the live card.</h2><p class="lead">Post $NERBY on X or Telegram and the link shows this card with the latest price and total burned. It is drawn fresh from the chain every few minutes.</p></header>
+    <div class="shr">
+      <img id="shimg" src="/api/og" alt="$NERBY live card with the current price, total burned and market cap" width="1200" height="630" loading="lazy">
+      <div class="shact">
+        <a class="btn s" id="shx" href="https://x.com/intent/post" target="_blank" rel="noopener"><small>X</small><b>Share on X</b></a>
+        <a class="btn l br" id="shtg" href="https://t.me/share/url" target="_blank" rel="noopener"><b>Telegram</b></a>
+        <button type="button" class="btn l br" id="shcopy"><b>Copy link</b></button>
+        <a class="btn l br" id="shdl" href="/api/og" download="nerby-live.png"><b>Download image</b></a>
+      </div>
+      <p class="fine">X keeps a copy of each link’s card. The Share buttons add a fresh code to the link so your post shows today’s numbers.</p>
+    </div>
   </section>
   <section class="ps" id="marketsec" hidden>
     <header><p class="n"><em>Chart</em></p><h2>Price over time.</h2><p class="lead">15-minute candles from the $NERBY / WETH pool. Hover the chart for the price at any point.</p></header>

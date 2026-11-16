@@ -294,3 +294,26 @@
   setInterval(function () { if (!document.hidden) chain(); }, 20000);
   setInterval(function () { if (!document.hidden) market(); }, 60000);
 })();
+
+/* share card: fresh link per share so X shows today's numbers */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  if (!$('shx')) return;
+  var link = function () { return 'https://www.nerbyprotocol.xyz/s/nerby?v=' + Math.floor(Date.now() / 600000).toString(36); };
+  var text = function () {
+    var p = ($('mprice') || {}).textContent, b = ($('kburn') || {}).textContent, pct = ($('kpct') || {}).textContent;
+    var parts = ['$NERBY live on Robinhood Chain 🪐'];
+    if (p && p !== '…') parts.push('Price ' + p);
+    if (b && b !== '…') parts.push('🔥 ' + b + ' NERBY burned' + (pct && pct !== '…' ? ' (' + pct + ')' : ''));
+    return parts.join('\n');
+  };
+  $('shx').addEventListener('click', function (e) { e.preventDefault(); window.open('https://x.com/intent/post?text=' + encodeURIComponent(text()) + '&url=' + encodeURIComponent(link()), '_blank', 'noopener'); });
+  $('shtg').addEventListener('click', function (e) { e.preventDefault(); window.open('https://t.me/share/url?url=' + encodeURIComponent(link()) + '&text=' + encodeURIComponent(text()), '_blank', 'noopener'); });
+  $('shcopy').addEventListener('click', function () {
+    var l = link(), b = $('shcopy').querySelector('b');
+    if (navigator.clipboard) navigator.clipboard.writeText(l).then(function () { b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy link'; }, 1600); });
+  });
+  // keep the preview image in step with the numbers on the page
+  setInterval(function () { if (!document.hidden) $('shimg').src = '/api/og?t=' + Math.floor(Date.now() / 300000); }, 300000);
+})();
