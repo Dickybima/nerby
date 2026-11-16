@@ -7,7 +7,7 @@ module.exports = async function (req, res) {
   const network = url.searchParams.get('network') || 'robinhood', token = url.searchParams.get('token') || '';
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
-  if (!GT_NETWORK[network] || !/^0x[0-9a-fA-F]{40}$/.test(token)) { res.statusCode = 400; return res.end(JSON.stringify({ error: 'Pass network and a 0x token address.' })); }
+  if (!GT_NETWORK[network] || !(/^0x[0-9a-fA-F]{40}$/.test(token) || (network === 'solana' && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(token)))) { res.statusCode = 400; return res.end(JSON.stringify({ error: 'Pass network and a 0x token address.' })); }
   try {
     const data = await market(network, token, true);
     res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=600');

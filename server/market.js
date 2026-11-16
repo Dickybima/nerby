@@ -2,7 +2,7 @@
 /* Nerby Protocol — market data (price, liquidity, volume, candles, trades) from the GeckoTerminal public API.
    Their free tier allows about 30 calls a minute, so results are cached here and at Vercel's edge. */
 const GT = 'https://api.geckoterminal.com/api/v2';
-const GT_NETWORK = { robinhood: 'robinhood', ethereum: 'eth', base: 'base', arbitrum: 'arbitrum', optimism: 'optimism', polygon: 'polygon_pos', bsc: 'bsc', avalanche: 'avax', linea: 'linea', scroll: 'scroll', gnosis: 'xdai' };
+const GT_NETWORK = { robinhood: 'robinhood', ethereum: 'eth', base: 'base', arbitrum: 'arbitrum', optimism: 'optimism', polygon: 'polygon_pos', bsc: 'bsc', avalanche: 'avax', linea: 'linea', scroll: 'scroll', gnosis: 'xdai', solana: 'solana' };
 const TTL = 60 * 1000;
 const cache = new Map();
 
@@ -22,8 +22,10 @@ const num = (v) => (v === null || v === undefined || v === '' ? null : Number(v)
 async function load(network, token, full) {
   const gn = GT_NETWORK[network];
   if (!gn) throw new MarketError('No market data for this network.');
-  if (!/^0x[0-9a-fA-F]{40}$/.test(token)) throw new MarketError('token must be a 0x address.');
-  const t = await gt(`/networks/${gn}/tokens/${token.toLowerCase()}?include=top_pools`);
+  const evm = /^0x[0-9a-fA-F]{40}$/.test(token);
+  if (!evm && !(network === 'solana' && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(token))) throw new MarketError('token must be a token address.');
+  const id = evm ? token.toLowerCase() : token; // Solana addresses are case-sensitive
+  const t = await gt(`/networks/${gn}/tokens/${id}?include=top_pools`);
   if (!t || !t.data) return { listed: false, network, token, note: 'No trading pool was found for this token on GeckoTerminal.' };
   const a = t.data.attributes, pools = (t.included || []).filter((i) => i.type === 'pool');
   const out = {
@@ -46,7 +48,7 @@ async function load(network, token, full) {
     gt(`/networks/${gn}/pools/${pool}/ohlcv/minute?aggregate=15&limit=300&currency=usd`).catch(() => null),
     gt(`/networks/${gn}/pools/${pool}/trades`).catch(() => null)
   ]);
-  const tl = token.toLowerCase();
+  const tl = id.toLowerCase();
   if (!candles || !trades) out.partial = true;
   out.candles = candles && candles.data ? candles.data.attributes.ohlcv_list.map((c) => ({ t: c[0] * 1000, o: c[1], h: c[2], l: c[3], c: c[4], v: c[5] })).reverse() : [];
   out.trades = trades && trades.data ? trades.data.slice(0, 60).map((x) => {
@@ -57,7 +59,7 @@ async function load(network, token, full) {
 }
 
 async function market(network, token, full) {
-  const base = network + ':' + token.toLowerCase(), key = base + ':' + (full ? 1 : 0);
+  const base = network + ':' + (/^0x/.test(token) ? token.toLowerCase() : token), key = base + ':' + (full ? 1 : 0);
   // a full result also answers a summary request
   const hit = cache.get(key) || (full ? null : cache.get(base + ':1'));
   if (hit && Date.now() - hit.at < TTL) return hit.value;

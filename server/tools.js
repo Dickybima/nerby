@@ -3,6 +3,7 @@
 const { encodeFunctionData, decodeFunctionResult, encodeDeployData, getContractAddress, parseAbiItem, formatUnits, isAddress, toFunctionSelector } = require('viem');
 const { compile, erc20Source, encodeRecipe, CompileError } = require('./compiler');
 const { market, MarketError } = require('./market');
+const solana = require('./solana');
 
 // Public RPC endpoints. Override any of them with an env var, e.g. RPC_ETHEREUM=https://…
 const NETWORKS = {
@@ -16,7 +17,9 @@ const NETWORKS = {
   avalanche: { name: 'Avalanche C-Chain', chainId: 43114, symbol: 'AVAX', rpc: 'https://avalanche-c-chain-rpc.publicnode.com', explorer: 'https://snowtrace.io' },
   linea: { name: 'Linea', chainId: 59144, symbol: 'ETH', rpc: 'https://linea-rpc.publicnode.com', explorer: 'https://lineascan.build' },
   scroll: { name: 'Scroll', chainId: 534352, symbol: 'ETH', rpc: 'https://scroll-rpc.publicnode.com', explorer: 'https://scrollscan.com' },
-  gnosis: { name: 'Gnosis', chainId: 100, symbol: 'XDAI', rpc: 'https://gnosis-rpc.publicnode.com', explorer: 'https://gnosisscan.io' }
+  gnosis: { name: 'Gnosis', chainId: 100, symbol: 'XDAI', rpc: 'https://gnosis-rpc.publicnode.com', explorer: 'https://gnosisscan.io' },
+  elysium: { name: 'Elysium', chainId: 1339, symbol: 'ELY', rpc: 'https://rpc.elysiumchain.tech', explorer: 'https://elysiumscan.com', blockscout: 'https://elysiumscan.com' },
+  solana: { name: 'Solana', type: 'solana', chainId: null, symbol: 'SOL', rpc: 'https://solana-rpc.publicnode.com', explorer: 'https://solscan.io' }
 };
 const NETWORK_IDS = Object.keys(NETWORKS);
 
@@ -209,7 +212,7 @@ const sourceProps = {
 };
 
 const netProp = { type: 'string', enum: NETWORK_IDS, description: 'Network to query.' };
-const addrProp = (d) => ({ type: 'string', description: d + ' (0x address).' });
+const addrProp = (d) => ({ type: 'string', description: d + ' (0x address; base58 on Solana).' });
 const blockProp = { type: ['string', 'integer'], description: 'Block number, or "latest" (default).' };
 
 const TOOLS = [
@@ -217,7 +220,7 @@ const TOOLS = [
     name: 'list_networks',
     description: 'List the networks Nerby Protocol can reach, with chain IDs, native currency and block explorer.',
     inputSchema: { type: 'object', properties: {} },
-    run: async () => NETWORK_IDS.map((id) => ({ id, name: NETWORKS[id].name, chainId: NETWORKS[id].chainId, nativeCurrency: NETWORKS[id].symbol, explorer: NETWORKS[id].explorer, publicRpc: NETWORKS[id].rpc }))
+    run: async () => NETWORK_IDS.map((id) => ({ id, name: NETWORKS[id].name, type: NETWORKS[id].type || 'evm', chainId: NETWORKS[id].chainId, nativeCurrency: NETWORKS[id].symbol, explorer: NETWORKS[id].explorer, publicRpc: NETWORKS[id].rpc }))
   },
   {
     name: 'get_balance',
@@ -405,7 +408,8 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: { network: netProp, token: addrProp('Token contract') }, required: ['network', 'token'] },
     run: async (a) => {
       net(a.network);
-      try { return await market(a.network, address(a.token, 'token'), false); } catch (e) {
+      const tok = a.network === 'solana' ? (solana.isAddress(a.token) ? a.token : (() => { throw new ToolError('token must be a Solana mint address.'); })()) : address(a.token, 'token');
+      try { return await market(a.network, tok, false); } catch (e) {
         if (e instanceof MarketError) throw new ToolError(e.message);
         throw e;
       }
@@ -556,15 +560,26 @@ const TOOLS = [
   }
 ];
 
+// tools that have a Solana version; everything else is EVM-only
+const SOLANA_OK = new Set(Object.keys(solana.HANDLERS).concat(['list_networks', 'get_token_market', 'compile_contract']));
+
 async function callTool(name, args) {
   const tool = TOOLS.find((t) => t.name === name);
   if (!tool) return null;
+  args = args || {};
   try {
-    const result = await tool.run(args || {});
+    let result;
+    if (args.network === 'solana') {
+      if (!SOLANA_OK.has(name)) throw new ToolError(name + ' works on EVM networks only. On Solana you can use get_balance, get_token_balance, get_block, get_transaction, get_code, get_gas_price, check_token_safety and get_token_market.');
+      result = solana.HANDLERS[name] ? await solana.HANDLERS[name](args) : await tool.run(args);
+    } else {
+      result = await tool.run(args);
+    }
     return { content: [{ type: 'text', text: JSON.stringify(result, (k, v) => (typeof v === 'bigint' ? v.toString() : v), 2) }] };
   } catch (e) {
-    if (!(e instanceof ToolError)) console.error(e);
-    return { content: [{ type: 'text', text: e instanceof ToolError ? e.message : 'Unexpected error while running ' + name + '.' }], isError: true };
+    const known = e instanceof ToolError || e instanceof solana.SolanaError;
+    if (!known) console.error(e);
+    return { content: [{ type: 'text', text: known ? e.message : 'Unexpected error while running ' + name + '.' }], isError: true };
   }
 }
 

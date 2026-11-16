@@ -3,9 +3,9 @@
 const { toolList, callTool } = require('../server/tools');
 
 const VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
-const INFO = { name: 'nerby-protocol', title: 'Nerby Protocol', version: '0.4.0' };
+const INFO = { name: 'nerby-protocol', title: 'Nerby Protocol', version: '0.5.0' };
 const INSTRUCTIONS =
-  'Nerby Protocol gives access to EVM networks (call list_networks first; Robinhood Chain is "robinhood"). ' +
+  'Nerby Protocol gives access to twelve EVM networks and Solana (call list_networks first; Robinhood Chain is "robinhood", Solana is "solana" and has its own smaller tool set). ' +
   'No tool signs or sends anything. simulate_transaction dry-runs a transaction. ' +
   'prepare_deployment compiles a contract and returns a deployUrl: give that link to the user, with the fee and what the contract does, ' +
   'so they can review it and sign in their own wallet. Never ask the user for a private key or seed phrase.';

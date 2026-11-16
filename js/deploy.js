@@ -184,6 +184,7 @@
 
   mcp('list_networks', {}).then(function (list) {
     networks = list;
+    networks = list = list.filter(function (n) { return n.type !== 'solana'; }); // deployments are EVM only
     list.forEach(function (n) { var o = document.createElement('option'); o.value = n.id; o.textContent = n.name; $('network').appendChild(o); });
     return readRecipe().catch(function () { status('This deploy link is damaged, so nothing was filled in. Ask your AI for the link again, or fill in the form yourself.', 'err'); return null; });
   }).then(function (r) {

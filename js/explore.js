@@ -20,6 +20,11 @@
     var q = $('xq').value.trim(), net = netOf($('xnet').value), mine = ++seq;
     clear();
     if (!q) return say('Paste an address or a transaction hash.');
+    if (net.type === 'solana') {
+      if (/^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(q)) return solTx(net, q, mine);
+      if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(q)) return solAddr(net, q, mine);
+      return say('That is not a Solana address (base58, 32–44 characters) or signature.', 'err');
+    }
     if (/^0x[0-9a-fA-F]{64}$/.test(q)) return tx(net, q, mine);
     if (/^0x[0-9a-fA-F]{40}$/.test(q)) return addr(net, q, mine);
     say('That is not an address (0x + 40 characters) or a transaction hash (0x + 64 characters).', 'err');
@@ -146,8 +151,76 @@
     }).catch(function () { if (mine === seq) say('Could not reach the Nerby Protocol server. Try again.', 'err'); });
   }
 
+  // ---------- Solana ----------
+  function solAddr(net, a, mine) {
+    history.replaceState(null, '', '#' + net.id + '/' + a);
+    say('Reading Solana…');
+    N.batchRetry([['get_code', { network: net.id, address: a }]]).then(function (r) {
+      if (mine !== seq) return;
+      if (!r[0].ok) return say(r[0].error, 'err');
+      say('');
+      var acc = r[0].data, g = section(acc.exists ? acc.kind.charAt(0).toUpperCase() + acc.kind.slice(1) : 'Empty address');
+      g.appendChild(N.tile('Address', N.link(net.explorer + '/account/' + a, a), 'Solana', 'wide'));
+      g.appendChild(N.tile('SOL balance', acc.exists ? N.trimNum(acc.balance) + ' SOL' : '0 SOL'));
+      if (acc.exists) g.appendChild(N.tile('Owner program', N.short(acc.owner), acc.kind === 'wallet' ? 'System program' : ''));
+      if (!acc.exists || acc.kind === 'wallet') { solTokenCheck(net, a); return; }
+      if (acc.kind !== 'token mint') return;
+      N.batchRetry([['check_token_safety', { network: net.id, address: a }], ['get_token_market', { network: net.id, token: a }]]).then(function (q) {
+        if (mine !== seq) return;
+        if (q[1].ok && q[1].data.listed) {
+          var m = q[1].data, t = section((m.name || 'Token') + (m.symbol ? ' (' + m.symbol + ')' : ''));
+          t.appendChild(N.tile('Price', m.priceUsd ? '$' + Number(m.priceUsd).toPrecision(4) : '—'));
+          t.appendChild(N.tile('Liquidity', m.liquidityUsd ? '$' + Math.round(m.liquidityUsd).toLocaleString() : '—'));
+          t.appendChild(N.tile('Volume 24h', m.volume24hUsd ? '$' + Math.round(m.volume24hUsd).toLocaleString() : '—'));
+        }
+        if (q[0].ok) {
+          var d = q[0].data, t2 = section('Supply');
+          t2.appendChild(N.tile('Total supply', N.trimNum(d.token.totalSupply, 2), d.token.decimals + ' decimals · ' + d.token.program));
+          if (d.holders) t2.appendChild(N.tile('Largest account', d.holders.largestAccountPercent + '%', 'Top ten: ' + d.holders.top10Percent + '%'));
+          var sfs = N.el('section', 'xsec'); sfs.appendChild(N.el('h3', '', 'Safety check'));
+          var sfb = N.el('div', 'sf'); sfs.appendChild(sfb); $('xout').appendChild(sfs); N.safety(sfb, d);
+        }
+      });
+    }).catch(function () { if (mine === seq) say('Could not reach the Nerby Protocol server. Try again.', 'err'); });
+  }
+  function solTokenCheck(net, wallet) {
+    var s = N.el('section', 'xsec'); s.appendChild(N.el('h3', '', 'Check a token balance'));
+    var f = N.el('form', 'xrow'), i = N.el('input'), b = N.el('button', 'btn l br'), out = N.el('div', 'tiles');
+    i.type = 'text'; i.placeholder = 'Token mint address'; i.spellcheck = false; i.value = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+    b.type = 'submit'; b.appendChild(N.el('b', '', 'Check'));
+    f.appendChild(i); f.appendChild(b); s.appendChild(f); s.appendChild(out); $('xout').appendChild(s);
+    var go = function (e) {
+      if (e) e.preventDefault(); out.textContent = '';
+      N.batchRetry([['get_token_balance', { network: net.id, token: i.value.trim(), address: wallet }]]).then(function (r) {
+        out.appendChild(r[0].ok ? N.tile('Balance', N.trimNum(r[0].data.balance, 4), 'Mint ' + N.short(r[0].data.token)) : N.tile('Balance', 'Not available', r[0].error, 'warn'));
+      });
+    };
+    f.addEventListener('submit', go); go();
+  }
+  function solTx(net, h, mine) {
+    history.replaceState(null, '', '#' + net.id + '/' + h);
+    say('Reading Solana…');
+    N.batchRetry([['get_transaction', { network: net.id, hash: h }]]).then(function (r) {
+      if (mine !== seq) return;
+      if (!r[0].ok) return say(r[0].error, 'err');
+      say('');
+      var t = r[0].data, g = section('Transaction');
+      g.appendChild(N.tile('Signature', N.link(net.explorer + '/tx/' + h, h), 'Solana', 'wide'));
+      g.appendChild(N.tile('Status', t.status === 'success' ? 'Success' : 'Failed', 'Slot ' + t.slot.toLocaleString(), t.status === 'success' ? 'ok' : 'warn'));
+      g.appendChild(N.tile('Signer', addrLink(net, t.signer, N.short(t.signer))));
+      g.appendChild(N.tile('Fee', N.trimNum(t.fee, 9) + ' SOL', t.signerSolChange ? 'Signer SOL change ' + t.signerSolChange : ''));
+      g.appendChild(N.tile('Time', t.timestamp ? new Date(t.timestamp).toLocaleString() : '—', t.programs.length + ' program(s)'));
+      if (!t.tokenChanges.length) return;
+      var s2 = section('Token balance changes');
+      t.tokenChanges.slice(0, 9).forEach(function (c) {
+        var row = N.el('span'); row.appendChild(addrLink(net, c.owner, N.short(c.owner)));
+        s2.appendChild(N.tile('Mint ' + N.short(c.mint), c.change, row, /^-/.test(c.change) ? '' : 'ok'));
+      });
+    }).catch(function () { if (mine === seq) say('Could not reach the Nerby Protocol server. Try again.', 'err'); });
+  }
+
   function fromHash() {
-    var m = /^#([a-z]+)\/(0x[0-9a-fA-F]{40,64})$/.exec(location.hash);
+    var m = /^#([a-z]+)\/(0x[0-9a-fA-F]{40,64}|[1-9A-HJ-NP-Za-km-z]{32,90})$/.exec(location.hash);
     if (!m || !netOf(m[1])) return false;
     $('xnet').value = m[1]; $('xq').value = m[2];
     run();
