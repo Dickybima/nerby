@@ -53,20 +53,6 @@
 
   // ---------- chain reads (through the Nerby endpoint, no wallet needed) ----------
   function call(to, fn, args) { return ['call_contract', { network: NET, address: to, function: fn, args: args || [] }]; }
-  function curveState(who) {
-    return N.batchRetry([
-      call(CURVE, 'getReserves() view returns (uint256,uint256)'), call(CURVE, 'feeBps() view returns (uint256)'),
-      call(CURVE, 'creatorTaxBps() view returns (uint256)'), call(CURVE, 'graduated() view returns (bool)'),
-      call(CURVE, 'readyToGraduate() view returns (bool)'), call(CURVE, 'sellableTokens() view returns (uint256)'),
-      call(CURVE, 'currentSnipeTaxBps(address) view returns (uint256)', [who || DEAD])
-    ]).then(function (r) {
-      if (!r.every(function (x) { return x.ok; })) throw new Error('Could not read the $NERBY curve. Try again.');
-      return {
-        quote: BigInt(r[0].data.result[0]), tokens: BigInt(r[0].data.result[1]), fee: BigInt(r[1].data.result), tax: BigInt(r[2].data.result),
-        closed: r[3].data.result || r[4].data.result, sellable: BigInt(r[5].data.result), snipe: BigInt(r[6].data.result)
-      };
-    });
-  }
   function balances(who) {
     return N.batchRetry([['get_balance', { network: NET, address: who }], call(TOKEN, 'balanceOf(address) view returns (uint256)', [who])]).then(function (r) {
       if (!r[0].ok || !r[1].ok) throw new Error('Could not read balances.');
@@ -140,17 +126,142 @@
     });
   }
 
+  // ---------- tokens and routes ----------
+  var NATIVE = '0x0000000000000000000000000000000000000000', tokCache = {};
+  function tokenInfo(q) {
+    q = String(q || 'nerby').toLowerCase().replace(/^\$/, '');
+    if (q === 'eth') return Promise.resolve({ address: NATIVE, symbol: 'ETH', decimals: 18, native: true });
+    if (tokCache[q]) return Promise.resolve(tokCache[q]);
+    return fetch('/api/swap?op=token&q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (t) {
+      if (t.error) throw new Error(t.error);
+      tokCache[q] = t; tokCache[t.address] = t;
+      return t;
+    });
+  }
+  function units(raw, dec, max) { return N.units(BigInt(raw).toString(), dec, max === undefined ? 4 : max); }
+  function parseAmt(s, dec) {
+    s = String(s).toLowerCase().replace(/,/g, '');
+    if (s === 'all' || s === 'max') return { pct: 100 };
+    var p = /^(\d+(?:\.\d+)?)%$/.exec(s);
+    if (p) { var v = Number(p[1]); return v > 0 && v <= 100 ? { pct: v } : null; }
+    var m = /^(\d*\.?\d+)([kmb])?$/.exec(s);
+    if (!m) return null;
+    var parts = m[1].split('.'), frac = (parts[1] || '').slice(0, dec).padEnd(dec, '0');
+    var w = BigInt(parts[0] || '0') * 10n ** BigInt(dec) + BigInt(frac || '0');
+    return { wei: w * 10n ** BigInt({ k: 3, m: 6, b: 9 }[m[2]] || 0) };
+  }
+  var isNum = function (w) { return /^(\d*\.?\d+[kmb]?|\d+(\.\d+)?%|all|max)$/i.test(String(w).replace(/,/g, '')); };
+  var STOP = ['of', 'for', 'with', 'worth', 'to', 'into', 'my', 'some'];
+
+  function curveState(curve, who) {
+    return N.batchRetry([
+      call(curve, 'getReserves() view returns (uint256,uint256)'), call(curve, 'feeBps() view returns (uint256)'),
+      call(curve, 'creatorTaxBps() view returns (uint256)'), call(curve, 'graduated() view returns (bool)'),
+      call(curve, 'readyToGraduate() view returns (bool)'), call(curve, 'sellableTokens() view returns (uint256)'),
+      call(curve, 'currentSnipeTaxBps(address) view returns (uint256)', [who || DEAD])
+    ]).then(function (r) {
+      if (!r.every(function (x) { return x.ok; })) throw new Error('Could not read the token’s curve. Try again.');
+      return {
+        quote: BigInt(r[0].data.result[0]), tokens: BigInt(r[0].data.result[1]), fee: BigInt(r[1].data.result), tax: BigInt(r[2].data.result),
+        closed: r[3].data.result || r[4].data.result, sellable: BigInt(r[5].data.result), snipe: BigInt(r[6].data.result)
+      };
+    });
+  }
+  function balanceOf(who, t) {
+    if (t.native) return N.batchRetry([['get_balance', { network: NET, address: who }]]).then(function (r) { if (!r[0].ok) throw new Error('Could not read balances.'); return BigInt(r[0].data.wei); });
+    return N.batchRetry([call(t.address, 'balanceOf(address) view returns (uint256)', [who])]).then(function (r) { if (!r[0].ok) throw new Error('Could not read balances.'); return BigInt(r[0].data.result); });
+  }
+  function resolveAmt(a, bal, dec, label) {
+    if (!a) return null;
+    if (a.pct) { if (label === 'ETH') throw new Error('Give an exact ETH amount so some is left for gas.'); return a.pct === 100 ? bal : bal * BigInt(Math.round(a.pct * 100)) / BPS; }
+    return a.wei;
+  }
+
+  // builds a priced, ready-to-confirm swap: curve when possible, LI.FI otherwise
+  function quote(from, to, amtIn, exactOut) {
+    if (from.address === to.address) throw new Error('Pick two different tokens.');
+    if (from.native && to.onCurve) return curveBuy(to, amtIn, exactOut);
+    if (to.native && from.onCurve) return curveSell(from, amtIn);
+    if (exactOut) throw new Error('Exact-amount buys work for tokens still on their Pons curve. For ' + to.symbol + ', give the ETH amount instead, e.g. buy 0.01 eth of ' + to.symbol.toLowerCase());
+    return lifi(from, to, amtIn);
+  }
+  function curveBuy(t, amt, exactOut) {
+    var c = t.pons.curve;
+    return curveState(c, account).then(function (st) {
+      if (st.closed) throw new Error(t.symbol + ' has just finished its curve. Try again in a minute; it will route through its new pool.');
+      var cut = st.fee + st.tax + st.snipe, quoteIn, outEst;
+      if (!exactOut) { quoteIn = amt; outEst = amountOut(quoteIn - quoteIn * cut / BPS, st.quote, st.tokens); }
+      else {
+        if (amt >= st.tokens) throw new Error('That is more than the curve holds.');
+        var net = amountIn(amt, st.quote, st.tokens);
+        quoteIn = (net * BPS + (BPS - cut) - 1n) / (BPS - cut) + 10n; outEst = amt;
+      }
+      var partial = outEst > st.sellable; if (partial) outEst = st.sellable;
+      var min = outEst * BigInt(Math.round((100 - slippage) * 100)) / BPS;
+      var spot = Number(st.quote) / Number(st.tokens), paid = Number(quoteIn) * (1 - Number(cut) / 10000) / Number(outEst || 1n);
+      return {
+        route: 'curve', from: { symbol: 'ETH', decimals: 18, native: true }, to: t, amountIn: quoteIn, out: outEst, min: min, impact: Math.max(0, (paid / spot - 1) * 100),
+        fees: Number(st.fee) / 100 + '% + ' + Number(st.tax) / 100 + '% creator tax' + (st.snipe ? ' + ' + Number(st.snipe) / 100 + '% launch snipe tax' : '') + ' (Pons curve)',
+        via: 'Pons V2 bonding curve', note: partial ? 'Only ' + fmt(st.sellable, 0) + ' ' + t.symbol + ' are left on the curve; the rest of your ETH is refunded.' : null,
+        tx: { to: c, value: hex(quoteIn), data: SEL.buy + word(quoteIn) + word(min) + addr(account) }, approve: null
+      };
+    });
+  }
+  function curveSell(t, amt) {
+    var c = t.pons.curve;
+    return curveState(c, account).then(function (st) {
+      if (st.closed) throw new Error(t.symbol + ' has just finished its curve. Try again in a minute; it will route through its new pool.');
+      var gross = amountOut(amt, st.tokens, st.quote), net = gross - gross * st.fee / BPS - gross * st.tax / BPS;
+      var min = net * BigInt(Math.round((100 - slippage) * 100)) / BPS, spot = Number(st.quote) / Number(st.tokens);
+      return {
+        route: 'curve', from: t, to: { symbol: 'ETH', decimals: 18, native: true }, amountIn: amt, out: net, min: min, impact: Math.max(0, (1 - Number(gross) / Number(amt) / spot) * 100),
+        fees: Number(st.fee) / 100 + '% + ' + Number(st.tax) / 100 + '% creator tax (Pons curve)', via: 'Pons V2 bonding curve',
+        tx: { to: c, data: SEL.sell + word(amt) + word(min) + addr(account) }, approve: { token: t, spender: c, amount: amt }
+      };
+    });
+  }
+  function lifi(from, to, amt) {
+    var u = '/api/swap?op=quote&from=' + from.address + '&to=' + to.address + '&amount=' + amt.toString() + '&address=' + account + '&slippage=' + (slippage / 100);
+    return fetch(u).then(function (r) { return r.json(); }).then(function (q) {
+      if (q.error) throw new Error(q.error);
+      return {
+        route: 'lifi', from: from, to: to, amountIn: amt, out: BigInt(q.toAmount), min: BigInt(q.toAmountMin), usd: [q.fromUsd, q.toUsd],
+        impact: q.fromUsd && q.toUsd ? Math.max(0, (1 - Number(q.toUsd) / Number(q.fromUsd)) * 100) : null,
+        fees: (q.fees.map(function (f) { return f.name + ' ' + f.percent.toFixed(2) + '%'; }).join(' + ') || 'DEX fees') + ' + pool fees', via: q.via + ' via LI.FI',
+        tx: q.tx, approve: from.native ? null : { token: from, spender: q.approval, amount: amt },
+        requote: function () { return lifi(from, to, amt); }
+      };
+    });
+  }
+  function preview(q, title) {
+    var rows = [
+      ['You pay', units(q.amountIn, q.from.decimals, q.from.native ? 6 : 2) + ' ' + q.from.symbol],
+      ['You get about', units(q.out, q.to.decimals, q.to.native ? 6 : 0) + ' ' + q.to.symbol, 'up'],
+      ['Minimum (slippage ' + slippage + '%)', units(q.min, q.to.decimals, q.to.native ? 6 : 0) + ' ' + q.to.symbol]
+    ];
+    if (q.impact !== null && q.impact !== undefined) rows.push([q.route === 'lifi' ? 'Price impact (est.)' : 'Price impact', q.impact.toFixed(2) + '%', q.impact > 5 ? 'warn' : '']);
+    rows.push(['Fees', q.fees + ' · Nerby adds no fee']);
+    rows.push(['Route', q.via + ' · Robinhood Chain']);
+    if (q.approve) rows.push(['Steps', 'Approve this exact ' + q.approve.token.symbol + ' amount (only if needed), then swap']);
+    if (q.note) rows.push(['Note', q.note, 'warn']);
+    card(rows, title);
+    var other = (q.to.alsoNamed || []).concat(q.from.alsoNamed || []);
+    if (other.length) line('Other tokens use this name too. Check the address: ' + (q.to.native ? q.from.address : q.to.address), 'warn');
+    var lbl = title.replace('Preview · ', ''); pending = { q: q, label: lbl.charAt(0).toUpperCase() + lbl.slice(1) };
+    ask();
+  }
+
   // ---------- commands ----------
   var HELP = [
     ['buy 0.01 eth', 'Buy $NERBY with 0.01 ETH'],
-    ['buy 1m nerby', 'Buy 1,000,000 $NERBY (pays the ETH needed)'],
-    ['sell 500k nerby', 'Sell an amount of $NERBY for ETH'],
-    ['sell 50% nerby', 'Sell part of your $NERBY ("all" works too)'],
-    ['send 1000 nerby to 0x…', 'Send $NERBY to an address'],
-    ['send 0.01 eth to 0x…', 'Send ETH to an address'],
-    ['burn 10k nerby', 'Send $NERBY to the burn address'],
-    ['price', 'Price, fees and curve status'],
-    ['balance [0x…]', 'Your balances, or any address'],
+    ['buy 0.01 eth of hylit', 'Buy any Robinhood Chain token by name or 0x address'],
+    ['buy 1m nerby', 'Buy an exact amount (tokens still on a Pons curve)'],
+    ['sell 50% nerby', 'Sell a token for ETH: 500k, 1m, 50% or all'],
+    ['swap 100k nerby to wif', 'Swap one token for another'],
+    ['send 1000 nerby to 0x…', 'Send any token or ETH to an address'],
+    ['burn 10k nerby', 'Send a token to the burn address'],
+    ['price wif', 'Price and how a token trades'],
+    ['balance [token|0x…]', 'Your balances, a token, or any address'],
     ['slippage 2', 'Set slippage tolerance in % (now ' + slippage + '%)'],
     ['connect · wallet · disconnect', 'Choose, show or disconnect your wallet'],
     ['clear · help', '']
@@ -169,148 +280,139 @@
     if (pending && /^(n|no|cancel)$/.test(t[0])) { pending = null; line('Cancelled. Nothing was sent.', 'mute'); return Promise.resolve(); }
     if (!pending && /^(y|yes|n|no|confirm|cancel)$/.test(t[0])) { line('Nothing to confirm right now.', 'mute'); return Promise.resolve(); }
     if (pending) { pending = null; line('Previous preview cancelled.', 'mute'); }
-    var c = t[0];
+    var c = t[0], rest = t.slice(1).filter(function (w) { return STOP.indexOf(w) < 0; });
     if (c === 'help' || c === '?') return Promise.resolve(help());
     if (c === 'clear') { out.textContent = ''; return Promise.resolve(); }
     if (c === 'connect') return connect().then(function () { line('Connected ' + (W.name() || 'wallet') + ' · ' + account, 'ok'); return cmdBalance([]); });
     if (c === 'disconnect') { W.disconnect(); setAccount(null); line('Disconnected. Type connect to choose a wallet.', 'mute'); return Promise.resolve(); }
     if (c === 'wallet') return Promise.resolve(walletCard());
     if (c === 'slippage') { var v = Number(t[1]); if (!(v > 0 && v <= 50)) throw new Error('Use a number between 0.1 and 50, for example: slippage 2'); slippage = v; line('Slippage set to ' + v + '%.', 'ok'); return Promise.resolve(); }
-    if (c === 'price') return cmdPrice();
-    if (c === 'balance' || c === 'bal') return cmdBalance(t.slice(1));
-    if (c === 'buy') return cmdBuy(t.slice(1));
-    if (c === 'sell') return cmdSell(t.slice(1));
-    if (c === 'send' || c === 'transfer') return cmdSend(t.slice(1), s.split(' ').slice(1));
-    if (c === 'burn') return cmdBurn(t.slice(1));
+    if (c === 'price') return cmdPrice(rest[0]);
+    if (c === 'balance' || c === 'bal') return cmdBalance(rest);
+    if (c === 'buy') return cmdBuy(rest);
+    if (c === 'sell') return cmdSell(rest);
+    if (c === 'swap' || c === 'trade') return cmdSwap(t.slice(1));
+    if (c === 'send' || c === 'transfer') return cmdSend(rest, s.split(' ').slice(1));
+    if (c === 'burn') return cmdBurn(rest);
     throw new Error('Unknown command "' + c + '". Type help to see what works.');
   }
 
-  function cmdPrice() {
-    return Promise.all([curveState(account), fetch('/api/market?network=' + NET + '&token=' + TOKEN).then(function (r) { return r.json(); }).catch(function () { return {}; })]).then(function (r) {
-      var st = r[0], m = r[1], p = m.pools && m.pools[0];
-      var c1 = E18 / 100n, perEth = amountOut(c1 - c1 * (st.fee + st.tax) / BPS, st.quote, st.tokens);
-      card([
-        ['Price', m.priceUsd ? '$' + Number(m.priceUsd).toPrecision(4) : '—'],
-        ['0.01 ETH buys about', fmt(perEth, 0) + ' NERBY'],
-        ['24h change', p && p.priceChange ? p.priceChange.h24 + '%' : '—'],
-        ['Fees per trade', Number(st.fee) / 100 + '% protocol + ' + Number(st.tax) / 100 + '% creator tax'],
-        ['Curve', st.closed ? 'Graduated — trading moved to the V4 pool' : 'Open · ' + fmt(st.sellable, 0) + ' NERBY left before graduation']
-      ], '$NERBY on the Pons V2 curve');
-    });
-  }
-
-  function cmdBalance(t) {
-    var who = t[0] && isAddr(t[0]) ? t[0] : null;
-    return (who ? Promise.resolve(who) : needWallet()).then(function (a) {
-      return balances(a).then(function (b) {
-        card([['Address', N.link('explore.html#robinhood/' + a, N.short(a))], ['ETH', fmt(b.eth, 6)], ['NERBY', fmt(b.nerby, 2)]], 'Balance');
-        if (!who) refreshBar();
+  function cmdPrice(q) {
+    return tokenInfo(q || 'nerby').then(function (t) {
+      if (t.native) throw new Error('Name a token, for example: price nerby');
+      var m = fetch('/api/market?network=' + NET + '&token=' + t.address).then(function (r) { return r.json(); }).catch(function () { return {}; });
+      var st = t.onCurve ? curveState(t.pons.curve, account) : Promise.resolve(null);
+      return Promise.all([m, st]).then(function (r) {
+        var mk = r[0], s2 = r[1], p = mk.pools && mk.pools[0];
+        var rows = [['Price', mk.priceUsd ? '$' + Number(mk.priceUsd).toPrecision(4) : '—'], ['24h change', p && p.priceChange ? p.priceChange.h24 + '%' : '—'],
+          ['Address', N.link('explore.html#robinhood/' + t.address, t.address)]];
+        if (s2) {
+          var c1 = E18 / 100n;
+          rows.push(['0.01 ETH buys about', fmt(amountOut(c1 - c1 * (s2.fee + s2.tax) / BPS, s2.quote, s2.tokens), 0) + ' ' + t.symbol]);
+          rows.push(['Trades on', 'Pons curve · ' + Number(s2.fee) / 100 + '% fee + ' + Number(s2.tax) / 100 + '% creator tax']);
+        } else rows.push(['Trades on', (t.pons ? 'Its graduated pool' : 'DEX pools') + ' · routed by LI.FI']);
+        card(rows, '$' + t.symbol);
       });
     });
   }
 
-  // buy <x> eth [of nerby] · buy nerby with <x> eth · buy <n> nerby
-  function cmdBuy(t) {
-    var words = t.filter(function (w) { return ['of', 'with', 'for', 'worth', 'to'].indexOf(w) < 0; });
-    var ethIdx = words.indexOf('eth'), nerIdx = words.indexOf('nerby');
-    var ethAmt = ethIdx > 0 ? amount(words[ethIdx - 1]) : null, tokAmt = !ethAmt && nerIdx > 0 ? amount(words[nerIdx - 1]) : null;
-    if (!ethAmt && words[0] && ethIdx < 0 && nerIdx < 0) ethAmt = amount(words[0]);
-    if ((!ethAmt || ethAmt.pct) && (!tokAmt || tokAmt.pct)) throw new Error('Try: buy 0.01 eth  or  buy 1m nerby');
-    return needWallet().then(function () { return Promise.all([curveState(account), balances(account)]); }).then(function (r) {
-      var st = r[0], b = r[1];
-      if (st.closed) throw new Error('$NERBY has graduated from the curve; trading moved to its Uniswap V4 pool. Terminal trading for the pool is not available yet.');
-      var cut = st.fee + st.tax + st.snipe, quoteIn, outEst;
-      if (ethAmt) {
-        quoteIn = ethAmt.wei;
-        outEst = amountOut(quoteIn - quoteIn * st.fee / BPS - quoteIn * st.tax / BPS - quoteIn * st.snipe / BPS, st.quote, st.tokens);
-      } else {
-        if (tokAmt.wei >= st.tokens) throw new Error('That is more than the curve holds.');
-        var net = amountIn(tokAmt.wei, st.quote, st.tokens);
-        quoteIn = (net * BPS + (BPS - cut) - 1n) / (BPS - cut) + 10n; // gross up for fees, round up
-        outEst = tokAmt.wei;
-      }
-      if (quoteIn <= 0n) throw new Error('Amount is too small.');
-      if (b.eth < quoteIn) throw new Error('Not enough ETH: you have ' + fmt(b.eth, 6) + ', this needs ' + fmt(quoteIn, 6) + ' plus gas.');
-      var partial = outEst > st.sellable;
-      if (partial) outEst = st.sellable;
-      var min = outEst * BigInt(Math.round((100 - slippage) * 100)) / BPS;
-      var spot = Number(st.quote) / Number(st.tokens), paid = Number(quoteIn) * (1 - Number(cut) / 10000) / Number(outEst || 1n);
-      var impact = Math.max(0, (paid / spot - 1) * 100);
-      pending = { kind: 'buy', tx: { to: CURVE, value: hex(quoteIn), data: SEL.buy + word(quoteIn) + word(min) + addr(account) }, label: 'Buy' };
-      card([
-        ['You pay', fmt(quoteIn, 6) + ' ETH'],
-        ['You get about', fmt(outEst, 0) + ' NERBY', 'up'],
-        ['Minimum (slippage ' + slippage + '%)', fmt(min, 0) + ' NERBY'],
-        ['Price impact', impact.toFixed(2) + '%', impact > 5 ? 'warn' : ''],
-        ['Fees', Number(st.fee) / 100 + '% + ' + Number(st.tax) / 100 + '% creator tax' + (st.snipe ? ' + ' + Number(st.snipe) / 100 + '% launch snipe tax' : '') + ' · Nerby adds no fee'],
-        ['Route', 'Pons V2 bonding curve · Robinhood Chain']
-      ].concat(partial ? [['Note', 'Only ' + fmt(st.sellable, 0) + ' NERBY are left on the curve; the rest of your ETH is refunded.', 'warn']] : []), 'Preview · buy $NERBY');
-      ask();
+  function cmdBalance(t) {
+    var who = t[0] && isAddr(t[0]) ? t[0] : null, tok = t[0] && !who ? t[0] : null;
+    return (who ? Promise.resolve(who) : needWallet()).then(function (a) {
+      var list = [tokenInfo('eth'), tokenInfo('nerby')]; if (tok && tok !== 'nerby' && tok !== 'eth') list.push(tokenInfo(tok));
+      return Promise.all(list).then(function (toks) {
+        return Promise.all(toks.map(function (x) { return balanceOf(a, x); })).then(function (bals) {
+          card([['Address', N.link('explore.html#robinhood/' + a, N.short(a))]].concat(toks.map(function (x, i) { return [x.symbol, units(bals[i], x.decimals, x.native ? 6 : 2)]; })), 'Balance');
+          if (!who) refreshBar();
+        });
+      });
     });
   }
 
-  function tokenAmount(a, b) {
-    if (!a) return null;
-    if (a.pct) return a.pct === 100 ? b : b * BigInt(Math.round(a.pct * 100)) / BPS;
-    return a.wei;
-  }
-
-  function cmdSell(t) {
-    var words = t.filter(function (w) { return w !== 'of' && w !== 'for' && w !== 'eth' && w !== 'my'; });
-    var i = words.indexOf('nerby'), a = amount(i > 0 ? words[i - 1] : words[0] === 'nerby' ? words[1] : words[0]);
-    if (!a) throw new Error('Try: sell 500k nerby  or  sell 50% nerby  or  sell all nerby');
-    return needWallet().then(function () { return Promise.all([curveState(account), balances(account)]); }).then(function (r) {
-      var st = r[0], b = r[1], amt = tokenAmount(a, b.nerby);
-      if (st.closed) throw new Error('$NERBY has graduated from the curve; trading moved to its Uniswap V4 pool. Terminal trading for the pool is not available yet.');
-      if (!amt || amt <= 0n) throw new Error('You have no $NERBY to sell.');
-      if (amt > b.nerby) throw new Error('Not enough NERBY: you have ' + fmt(b.nerby, 0) + '.');
-      var gross = amountOut(amt, st.tokens, st.quote), net = gross - gross * st.fee / BPS - gross * st.tax / BPS;
-      var min = net * BigInt(Math.round((100 - slippage) * 100)) / BPS;
-      var spot = Number(st.quote) / Number(st.tokens), impact = Math.max(0, (1 - Number(gross) / Number(amt) / spot) * 100);
-      pending = { kind: 'sell', amt: amt, tx: { to: CURVE, data: SEL.sell + word(amt) + word(min) + addr(account) }, label: 'Sell' };
-      card([
-        ['You sell', fmt(amt, 0) + ' NERBY'],
-        ['You get about', fmt(net, 6) + ' ETH', 'up'],
-        ['Minimum (slippage ' + slippage + '%)', fmt(min, 6) + ' ETH'],
-        ['Price impact', impact.toFixed(2) + '%', impact > 5 ? 'warn' : ''],
-        ['Fees', Number(st.fee) / 100 + '% + ' + Number(st.tax) / 100 + '% creator tax · Nerby adds no fee'],
-        ['Steps', 'Approve this exact amount (only if needed), then sell']
-      ], 'Preview · sell $NERBY');
-      ask();
+  // buy 0.01 eth [of] TOKEN · buy TOKEN [with] 0.01 eth · buy 1m TOKEN · buy 0.01 eth (→ nerby)
+  function cmdBuy(w) {
+    var e = w.indexOf('eth'), amtWord, tokWord, exactOut = false;
+    if (e >= 0) {
+      amtWord = e > 0 && isNum(w[e - 1]) ? w[e - 1] : w[e + 1];
+      tokWord = w.filter(function (x, i) { return i !== e && x !== amtWord; })[0] || 'nerby';
+    } else { amtWord = w.filter(isNum)[0]; tokWord = w.filter(function (x) { return !isNum(x); })[0] || 'nerby'; exactOut = true; }
+    if (!amtWord || !isNum(amtWord)) throw new Error('Try: buy 0.01 eth of nerby  or  buy 1m nerby');
+    return needWallet().then(function () { return Promise.all([tokenInfo('eth'), tokenInfo(tokWord)]); }).then(function (tk) {
+      var eth = tk[0], to = tk[1];
+      if (to.native) throw new Error('Name the token to buy, e.g. buy 0.01 eth of nerby');
+      var a = parseAmt(amtWord, exactOut ? to.decimals : 18);
+      if (!a || a.pct) throw new Error('Give a fixed amount to buy, e.g. buy 0.01 eth of ' + to.symbol.toLowerCase());
+      return Promise.all([balanceOf(account, eth), quote(eth, to, a.wei, exactOut)]).then(function (r) {
+        if (r[0] < r[1].amountIn) throw new Error('Not enough ETH: you have ' + fmt(r[0], 6) + ', this needs ' + fmt(r[1].amountIn, 6) + ' plus gas.');
+        preview(r[1], 'Preview · buy $' + to.symbol);
+      });
     });
   }
 
-  function cmdSend(t, orig) {
+  function cmdSell(w) {
+    var amtWord = w.filter(isNum)[0], tokWord = w.filter(function (x) { return !isNum(x) && x !== 'eth'; })[0] || 'nerby';
+    if (!amtWord) throw new Error('Try: sell 500k nerby  or  sell 50% wif  or  sell all nerby');
+    return needWallet().then(function () { return Promise.all([tokenInfo(tokWord), tokenInfo('eth')]); }).then(function (tk) {
+      var from = tk[0];
+      if (from.native) throw new Error('Name the token to sell, e.g. sell 50% nerby');
+      return balanceOf(account, from).then(function (bal) {
+        var amt = resolveAmt(parseAmt(amtWord, from.decimals), bal, from.decimals, from.symbol);
+        if (!amt || amt <= 0n) throw new Error('You have no ' + from.symbol + ' to sell.');
+        if (amt > bal) throw new Error('Not enough ' + from.symbol + ': you have ' + units(bal, from.decimals, 2) + '.');
+        return quote(from, tk[1], amt).then(function (q) { preview(q, 'Preview · sell $' + from.symbol); });
+      });
+    });
+  }
+
+  // swap 100k nerby to wif · swap 0.01 eth to nerby · swap 50% wif for eth
+  function cmdSwap(w) {
+    var sep = w.findIndex(function (x) { return x === 'to' || x === 'for' || x === 'into'; });
+    if (sep < 2) throw new Error('Try: swap 100k nerby to wif');
+    var amtWord = w[0], fromWord = w.slice(1, sep).join(''), toWord = w.slice(sep + 1).join('');
+    if (!isNum(amtWord) || !toWord) throw new Error('Try: swap 100k nerby to wif');
+    return needWallet().then(function () { return Promise.all([tokenInfo(fromWord), tokenInfo(toWord)]); }).then(function (tk) {
+      var from = tk[0], to = tk[1];
+      return balanceOf(account, from).then(function (bal) {
+        var amt = resolveAmt(parseAmt(amtWord, from.decimals), bal, from.decimals, from.symbol);
+        if (!amt || amt <= 0n) throw new Error('Nothing to swap.');
+        if (amt > bal) throw new Error('Not enough ' + from.symbol + ': you have ' + units(bal, from.decimals, from.native ? 6 : 2) + '.');
+        return quote(from, to, amt).then(function (q) { preview(q, 'Preview · swap $' + from.symbol + ' → $' + to.symbol); });
+      });
+    });
+  }
+
+  function cmdSend(w, orig) {
     var to = orig.filter(isAddr)[0];
-    var asset = t.indexOf('eth') >= 0 ? 'eth' : t.indexOf('nerby') >= 0 ? 'nerby' : null;
-    var a = amount(t[0]);
-    if (!to || !asset || !a) throw new Error('Try: send 1000 nerby to 0x…  or  send 0.01 eth to 0x…');
-    if (to.toLowerCase() === TOKEN || to.toLowerCase() === CURVE) throw new Error('That is a contract address, not a wallet. Tokens sent there are lost.');
-    return needWallet().then(function () { return balances(account); }).then(function (b) {
-      var bal = asset === 'eth' ? b.eth : b.nerby, amt = tokenAmount(a, bal);
-      if (asset === 'eth' && a.pct) throw new Error('Give an exact ETH amount so some is left for gas.');
-      if (!amt || amt <= 0n) throw new Error('Nothing to send.');
-      if (amt > bal) throw new Error('Not enough ' + asset.toUpperCase() + ': you have ' + fmt(bal, 6) + '.');
-      pending = asset === 'eth'
-        ? { kind: 'send', tx: { to: to, value: hex(amt), data: '0x' }, label: 'Send ETH' }
-        : { kind: 'send', tx: { to: TOKEN, data: SEL.transfer + addr(to) + word(amt) }, label: 'Send NERBY' };
-      if (to.toLowerCase() === DEAD.toLowerCase()) pending.label = 'Burn';
-      card([['Send', fmt(amt, asset === 'eth' ? 6 : 2) + ' ' + asset.toUpperCase()], ['To', N.link('explore.html#robinhood/' + to, to)], ['Network', 'Robinhood Chain']], 'Preview · send');
-      line('Check the address carefully. Transfers cannot be reversed.', 'warn');
-      ask();
+    var amtWord = w.filter(isNum)[0], tokWord = w.filter(function (x) { return !isNum(x) && !isAddr(x); })[0] || 'nerby';
+    if (!to || !amtWord) throw new Error('Try: send 1000 nerby to 0x…  or  send 0.01 eth to 0x…');
+    return needWallet().then(function () { return tokenInfo(tokWord); }).then(function (t) {
+      if (!t.native && (to.toLowerCase() === t.address || (t.pons && to.toLowerCase() === t.pons.curve))) throw new Error('That is a contract address, not a wallet. Tokens sent there are lost.');
+      return balanceOf(account, t).then(function (bal) {
+        var amt = resolveAmt(parseAmt(amtWord, t.decimals), bal, t.decimals, t.symbol);
+        if (!amt || amt <= 0n) throw new Error('Nothing to send.');
+        if (amt > bal) throw new Error('Not enough ' + t.symbol + ': you have ' + units(bal, t.decimals, t.native ? 6 : 2) + '.');
+        var burn = to.toLowerCase() === DEAD.toLowerCase();
+        pending = { q: { tx: t.native ? { to: to, value: hex(amt), data: '0x' } : { to: t.address, data: SEL.transfer + addr(to) + word(amt) } }, label: burn ? 'Burn' : 'Send ' + t.symbol };
+        card([['Send', units(amt, t.decimals, t.native ? 6 : 2) + ' ' + t.symbol], ['To', N.link('explore.html#robinhood/' + to, to)], ['Network', 'Robinhood Chain']], 'Preview · send');
+        line('Check the address carefully. Transfers cannot be reversed.', 'warn');
+        ask();
+      });
     });
   }
 
-  function cmdBurn(t) {
-    var i = t.indexOf('nerby'), a = amount(i > 0 ? t[i - 1] : t[0]);
-    if (!a) throw new Error('Try: burn 10k nerby  or  burn 10% nerby');
-    return needWallet().then(function () { return balances(account); }).then(function (b) {
-      var amt = tokenAmount(a, b.nerby);
-      if (!amt || amt <= 0n) throw new Error('You have no $NERBY to burn.');
-      if (amt > b.nerby) throw new Error('Not enough NERBY: you have ' + fmt(b.nerby, 0) + '.');
-      pending = { kind: 'send', tx: { to: TOKEN, data: SEL.transfer + addr(DEAD) + word(amt) }, label: 'Burn' };
-      card([['Burn', fmt(amt, 2) + ' NERBY', 'hot'], ['Sent to', DEAD], ['Effect', 'Gone for good. Counted on the $NERBY page.']], 'Preview · burn');
-      ask();
+  function cmdBurn(w) {
+    var amtWord = w.filter(isNum)[0], tokWord = w.filter(function (x) { return !isNum(x); })[0] || 'nerby';
+    if (!amtWord) throw new Error('Try: burn 10k nerby  or  burn 10% nerby');
+    return needWallet().then(function () { return tokenInfo(tokWord); }).then(function (t) {
+      if (t.native) throw new Error('Burning works for tokens, not ETH.');
+      return balanceOf(account, t).then(function (bal) {
+        var amt = resolveAmt(parseAmt(amtWord, t.decimals), bal, t.decimals, t.symbol);
+        if (!amt || amt <= 0n) throw new Error('You have no ' + t.symbol + ' to burn.');
+        if (amt > bal) throw new Error('Not enough ' + t.symbol + ': you have ' + units(bal, t.decimals, 0) + '.');
+        pending = { q: { tx: { to: t.address, data: SEL.transfer + addr(DEAD) + word(amt) } }, label: 'Burn' };
+        card([['Burn', units(amt, t.decimals, 2) + ' ' + t.symbol, 'hot'], ['Sent to', DEAD], ['Effect', 'Gone for good' + (t.address === TOKEN ? '. Counted on the $NERBY page.' : '.')]], 'Preview · burn');
+        ask();
+      });
     });
   }
 
@@ -330,19 +432,34 @@
     line(row, 'raw');
   }
 
+  function approveIfNeeded(ap) {
+    if (!ap) return Promise.resolve();
+    return N.batchRetry([call(ap.token.address, 'allowance(address,address) view returns (uint256)', [account, ap.spender])]).then(function (r) {
+      var have = r[0].ok ? BigInt(r[0].data.result) : 0n;
+      if (have >= ap.amount) return null;
+      return send({ to: ap.token.address, data: SEL.approve + addr(ap.spender) + word(ap.amount) }, 'Approve ' + units(ap.amount, ap.token.decimals, 0) + ' ' + ap.token.symbol);
+    });
+  }
   function confirm() {
-    var p = pending; pending = null;
-    var go = function () {
-      if (p.kind === 'sell') {
-        return N.batch([call(TOKEN, 'allowance(address,address) view returns (uint256)', [account, CURVE])]).then(function (r) {
-          var have = r[0].ok ? BigInt(r[0].data.result) : 0n;
-          if (have >= p.amt) return null;
-          return send({ to: TOKEN, data: SEL.approve + addr(CURVE) + word(p.amt) }, 'Approve ' + fmt(p.amt, 0) + ' NERBY');
-        }).then(function () { return simulate(p.tx); }).then(function () { return send(p.tx, p.label); });
-      }
-      return simulate(p.tx).then(function () { return send(p.tx, p.label); });
-    };
-    return ensureChain().then(go).then(function () { refreshBar(); return cmdBalance([]); });
+    var p = pending, q = p.q, approved = false; pending = null;
+    return ensureChain().then(function () { return approveIfNeeded(q.approve); }).then(function (r) {
+      approved = !!r;
+      // routes from LI.FI expire quickly: fetch a fresh one and make sure it is not worse than what was shown
+      if (!q.requote) return q;
+      line('Refreshing the route…', 'mute');
+      return q.requote().then(function (f) {
+        if (f.min * 1000n < q.min * 995n) throw new Error('The price moved: you would now get at least ' + units(f.min, f.to.decimals, 0) + ' ' + f.to.symbol + ' instead of ' + units(q.min, q.to.decimals, 0) + '. Nothing was sent; run the command again to see the new quote.');
+        return f;
+      });
+    }).then(function (f) {
+      // right after an approval the node may need a moment to see it; give the dry-run one more try
+      var dry = function () { return simulate(f.tx).catch(function (e) { if (!approved) throw e; return new Promise(function (ok) { setTimeout(ok, 2500); }).then(function () { return simulate(f.tx); }); }); };
+      return dry().then(function (sim) {
+        var tx = Object.assign({}, f.tx);
+        if (sim && sim.unsignedTransaction && sim.unsignedTransaction.gas) tx.gas = sim.unsignedTransaction.gas;
+        return send(tx, p.label);
+      });
+    }).then(function () { refreshBar(); return cmdBalance([]); });
   }
 
   // ---------- input ----------
@@ -370,6 +487,6 @@
   W.onChange(function (a) { if ((a || null) !== account) setAccount(a); });
   W.restore();
 
-  line('Nerby Terminal · $NERBY on Robinhood Chain', 'head');
-  line('Type a command like  buy 0.01 eth  or  sell 50% nerby, then confirm in your wallet. Type help for everything.', 'mute');
+  line('Nerby Terminal · any token on Robinhood Chain', 'head');
+  line('Type a command like  buy 0.01 eth of nerby,  sell 50% wif  or  swap 100k nerby to wif, then confirm in your wallet. Type help for everything.', 'mute');
 })();

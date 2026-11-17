@@ -16,6 +16,7 @@ http.createServer((req, res) => {
   if (url.pathname === '/api/market') return marketApi(req, res);
   if (url.pathname === '/api/og') return require('../api/og')(req, res);
   if (url.pathname === '/api/pons') return require('../api/pons')(req, res);
+  if (url.pathname === '/api/swap') return require('../api/swap')(req, res);
   if (url.pathname === '/s/nerby' || url.pathname === '/api/share') return require('../api/share')(req, res);
   const rel = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname).replace(/^\/+/, '');
   const file = path.join(root, rel);
