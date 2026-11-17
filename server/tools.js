@@ -4,6 +4,7 @@ const { encodeFunctionData, decodeFunctionResult, encodeDeployData, getContractA
 const { compile, erc20Source, encodeRecipe, CompileError } = require('./compiler');
 const { market, MarketError } = require('./market');
 const solana = require('./solana');
+const { topPons } = require('./pons');
 
 // Public RPC endpoints. Override any of them with an env var, e.g. RPC_ETHEREUM=https://…
 const NETWORKS = {
@@ -416,6 +417,16 @@ const TOOLS = [
     }
   },
   {
+    name: 'get_top_pons_tokens',
+    description: 'Top tokens launched on Pons (Robinhood Chain) ranked by 24h trading volume across the Pons curves, graduated Pons pools and older Pons pools. Each entry has price, 24h change, FDV, liquidity, buys and sells, stage (curve, graduated or pons) and, for tokens still on a curve, how close they are to graduating.',
+    inputSchema: { type: 'object', properties: { limit: { type: 'integer', description: 'How many tokens to return (default 10, max 50).' }, minFdvUsd: { type: 'number', description: 'Only tokens with at least this fully diluted value in USD.' } } },
+    run: async (a) => {
+      const d = await topPons(ponsCurveReader).catch((e) => { throw new ToolError('Pons data is not available right now (' + e.message + ').'); });
+      const min = Number(a.minFdvUsd) || 0, limit = Math.min(50, Math.max(1, Number(a.limit) || 10));
+      return { updatedAt: d.updatedAt, source: d.source, tokens: d.tokens.filter((t) => (t.fdvUsd || 0) >= min).slice(0, limit).map(({ pools, curve, ...t }) => t) };
+    }
+  },
+  {
     name: 'check_token_safety',
     description: 'Quick safety check of a token or contract: whether the deployer still has powers such as minting, pausing, blocking addresses, changing fees or replacing the code; whether ownership was renounced; whether the source is verified; and how much supply is burned. Reads the bytecode and storage directly. A heuristic first look, not an audit.',
     inputSchema: { type: 'object', properties: { network: netProp, address: addrProp('Token or contract to check') }, required: ['network', 'address'] },
@@ -559,6 +570,12 @@ const TOOLS = [
     }
   }
 ];
+
+// reads one value from a Pons curve, for graduation progress
+async function ponsCurveReader(curve, fn) {
+  const r = await readContract('robinhood', curve, fn, [], 'latest');
+  return r.result === undefined ? null : r.result;
+}
 
 // tools that have a Solana version; everything else is EVM-only
 const SOLANA_OK = new Set(Object.keys(solana.HANDLERS).concat(['list_networks', 'get_token_market', 'compile_contract']));
