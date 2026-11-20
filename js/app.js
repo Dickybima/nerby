@@ -199,7 +199,7 @@
     ctx.globalCompositeOperation = 'lighter';
 
     // floor grid
-    ctx.fillStyle = '#a1f837';
+    ctx.fillStyle = '#4d8dff';
     for (var gx = -7; gx <= 7; gx += 0.5) {
       for (var gz = -7; gz <= 7; gz += 0.5) {
         var d = Math.sqrt(gx * gx + gz * gz);
@@ -216,9 +216,9 @@
     project(0, 0, 0);
     var gr = unit * (1.7 + 0.12 * Math.sin(tm * 1.4));
     var g = ctx.createRadialGradient(pr[0], pr[1], 0, pr[0], pr[1], gr);
-    g.addColorStop(0, 'rgba(200,255,107,.5)');
-    g.addColorStop(0.18, 'rgba(161,248,55,.16)');
-    g.addColorStop(1, 'rgba(161,248,55,0)');
+    g.addColorStop(0, 'rgba(77,141,255,.5)');
+    g.addColorStop(0.18, 'rgba(138,99,210,.16)');
+    g.addColorStop(1, 'rgba(138,99,210,0)');
     ctx.globalAlpha = 1; ctx.fillStyle = g;
     ctx.fillRect(pr[0] - gr, pr[1] - gr, gr * 2, gr * 2);
 
@@ -237,7 +237,7 @@
       }
       project(x, y, z);
       var k = pr[2];
-      ctx.fillStyle = i % 5 === 0 ? '#e4ffd6' : '#a1f837';
+      ctx.fillStyle = i % 5 === 0 ? '#e4e8ff' : i % 2 ? '#4d8dff' : '#8a63d2';
       ctx.globalAlpha = clamp(0.25 + (k - 0.6) * 1.1, 0.12, 0.95);
       var sz = (i % 9 === 0 ? 2.6 : 1.5) * k;
       ctx.fillRect(pr[0] - sz / 2, pr[1] - sz / 2, sz, sz);
