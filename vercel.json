@@ -1,12 +1,11 @@
 {
-  "rewrites": [
-    { "source": "/mcp", "destination": "/api/mcp" },
-    { "source": "/s/nerby", "destination": "/api/share" }
+  "rewrites": [{ "source": "/mcp", "destination": "/api/mcp" }],
+  "redirects": [
+    { "source": "/token.html", "destination": "/", "permanent": false },
+    { "source": "/terminal.html", "destination": "/", "permanent": false },
+    { "source": "/explore.html", "destination": "/", "permanent": false },
+    { "source": "/pons.html", "destination": "/", "permanent": false },
+    { "source": "/s/:path*", "destination": "/", "permanent": false }
   ],
-  "functions": {
-    "api/mcp.js": { "maxDuration": 60, "memory": 1024 },
-    "api/og.js": { "maxDuration": 30, "memory": 1024, "includeFiles": "server/assets/**" },
-    "api/share.js": { "maxDuration": 20 },
-    "api/swap.js": { "maxDuration": 30 }
-  }
+  "functions": { "api/mcp.js": { "maxDuration": 60, "memory": 1024 } }
 }
