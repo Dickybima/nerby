@@ -8,9 +8,9 @@ const { topPons } = require('./pons');
 
 // Public RPC endpoints. Override any of them with an env var, e.g. RPC_ETHEREUM=https://…
 const NETWORKS = {
-  robinhood: { name: 'Robinhood Chain', chainId: 4663, symbol: 'ETH', rpc: 'https://rpc.mainnet.chain.robinhood.com', explorer: 'https://robinhoodchain.blockscout.com', blockscout: 'https://robinhoodchain.blockscout.com' },
-  ethereum: { name: 'Ethereum', chainId: 1, symbol: 'ETH', rpc: 'https://ethereum-rpc.publicnode.com', explorer: 'https://etherscan.io', blockscout: 'https://eth.blockscout.com' },
   base: { name: 'Base', chainId: 8453, symbol: 'ETH', rpc: 'https://base-rpc.publicnode.com', explorer: 'https://basescan.org', blockscout: 'https://base.blockscout.com' },
+  ethereum: { name: 'Ethereum', chainId: 1, symbol: 'ETH', rpc: 'https://ethereum-rpc.publicnode.com', explorer: 'https://etherscan.io', blockscout: 'https://eth.blockscout.com' },
+  robinhood: { name: 'Robinhood Chain', chainId: 4663, symbol: 'ETH', rpc: 'https://rpc.mainnet.chain.robinhood.com', explorer: 'https://robinhoodchain.blockscout.com', blockscout: 'https://robinhoodchain.blockscout.com' },
   arbitrum: { name: 'Arbitrum One', chainId: 42161, symbol: 'ETH', rpc: 'https://arbitrum-one-rpc.publicnode.com', explorer: 'https://arbiscan.io', blockscout: 'https://arbitrum.blockscout.com' },
   optimism: { name: 'OP Mainnet', chainId: 10, symbol: 'ETH', rpc: 'https://optimism-rpc.publicnode.com', explorer: 'https://optimistic.etherscan.io', blockscout: 'https://optimism.blockscout.com' },
   polygon: { name: 'Polygon', chainId: 137, symbol: 'POL', rpc: 'https://polygon-bor-rpc.publicnode.com', explorer: 'https://polygonscan.com', blockscout: 'https://polygon.blockscout.com' },
