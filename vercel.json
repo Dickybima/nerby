@@ -3,7 +3,6 @@
   "redirects": [
     { "source": "/token.html", "destination": "/", "permanent": false },
     { "source": "/terminal.html", "destination": "/", "permanent": false },
-    { "source": "/explore.html", "destination": "/", "permanent": false },
     { "source": "/pons.html", "destination": "/", "permanent": false },
     { "source": "/s/:path*", "destination": "/", "permanent": false }
   ],
